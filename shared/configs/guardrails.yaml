@@ -1,0 +1,8 @@
+enforcement: warning  # advisory/warning/blocking
+standards:
+  naming:
+    functions: "^[a-z_]+$"
+  logging:
+    require: "import logging"
+ai_focus: [security, performance]
+restricted_licenses: [gpl-3.0, agpl-3.0]
