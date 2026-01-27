@@ -1,22 +1,25 @@
 {
-    "name": "github-guardrails-app",
-    "version": "1.0.0",
-    "description": "MVP Guardrails GitHub App",
-    "main": "lib/index.js",
-    "scripts": {
-      "build": "tsc",
-      "start": "probot run ./lib/index.js",
-      "dev": "npm run build && npm start"
-    },
-    "dependencies": {
-      "@probot/octokit-plugin-config": "^4.1.0",
-      "probot": "^13.1.2"
-    },
-    "devDependencies": {
-      "@types/node": "^20.0.0",
-      "typescript": "^5.0.0"
-    },
-    "engines": {
-      "node": ">=18.0.0"
-    }
+  "name": "github-guardrails-app",
+  "version": "1.0.0",
+  "description": "MVP Guardrails GitHub App",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "probot run ./lib/index.js",
+    "dev": "npm run build && npm start"
+  },
+  "dependencies": {
+    "@octokit/rest": "^19.0.13",
+    "@probot/octokit-plugin-config": "^4.1.0",
+    "node-fetch": "^2.7.0",
+    "probot": "^13.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^16.18.126",
+    "@types/node-fetch": "^2.6.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
+}
