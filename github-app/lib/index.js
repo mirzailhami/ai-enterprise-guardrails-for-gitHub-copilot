@@ -87,7 +87,7 @@ module.exports = (app) => {
                     commitMsg = commit.message.toLowerCase();
                 }
                 catch (err) {
-                    app.log.warn("Could not fetch commit message");
+                    app.log.warn(`Failed to fetch commit message: ${err.message}`);
                 }
                 const isCopilot = commitMsg.includes("copilot") || commitMsg.includes("ai-generated") || commitMsg.includes("copilot suggestion");
                 app.log.info(`Copilot mode: ${isCopilot}`);
