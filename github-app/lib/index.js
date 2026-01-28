@@ -160,10 +160,10 @@ module.exports = (app) => {
         });
     }
     app.on("issue_comment.created", (context) => __awaiter(void 0, void 0, void 0, function* () {
-        const pr = context.payload.pull_request;
-        const owner = pr.head.repo.owner.login;
-        const repo = pr.head.repo.name;
-        const sha = pr.head.sha;
+        const pr = context.payload.issue;
+        const owner = pr.repository.owner.login;
+        const repo = pr.repository.name;
+        const sha = pr.pull_request.head.sha;
         const commentBody = context.payload.comment.body.trim();
         app.log.info(`Received comment: "${commentBody}" on issue #${context.payload.issue.number}`);
         if (commentBody === "/override") {
