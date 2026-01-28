@@ -82,14 +82,11 @@ module.exports = (app) => {
                 try {
                     // Use PR head commit SHA explicitly
                     const commitSha = pr.head.sha;
-                    app.log.info(`Fetching commit message for SHA: ${commitSha}`);
                     const { data: commitData } = yield context.octokit.repos.getCommit({
                         owner,
                         repo,
                         ref: commitSha,
                     });
-                    // Log full response for debug
-                    app.log.info(`Commit response: ${JSON.stringify(commitData, null, 2)}`);
                     // Safe access
                     commitMsg = ((_b = (_a = commitData === null || commitData === void 0 ? void 0 : commitData.commit) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.toLowerCase()) || "";
                     if (!commitMsg) {
@@ -163,18 +160,32 @@ module.exports = (app) => {
         });
     }
     app.on("issue_comment.created", (context) => __awaiter(void 0, void 0, void 0, function* () {
-        if (context.payload.comment.body.trim() === "/override") {
-            app.log.info("Override command received");
+        const commentBody = context.payload.comment.body.trim();
+        app.log.info(`Received comment: "${commentBody}" on issue #${context.payload.issue.number}`);
+        if (commentBody === "/override") {
+            app.log.info("Override command received - processing!");
             const pr = context.payload.issue;
-            yield context.octokit.repos.createCommitStatus({
-                owner: pr.repository.owner.login,
-                repo: pr.repository.name,
-                sha: pr.pull_request.head.sha,
-                state: "success",
-                context: "Guardrails",
-                description: "Overridden ⚠️",
-            });
-            yield context.octokit.issues.createComment(context.issue({ body: "Override approved—proceed with caution." }));
+            try {
+                yield context.octokit.repos.createCommitStatus({
+                    owner: pr.repository.owner.login,
+                    repo: pr.repository.name,
+                    sha: pr.pull_request.head.sha,
+                    state: "success",
+                    context: "Guardrails",
+                    description: "Overridden ⚠️",
+                });
+                app.log.info("Status overridden to success");
+                yield context.octokit.issues.createComment(context.issue({
+                    body: "Override approved—proceed with caution."
+                }));
+                app.log.info("Override reply comment posted");
+            }
+            catch (err) {
+                app.log.error(`Override failed: ${err.message}`);
+            }
+        }
+        else {
+            app.log.info(`Ignored comment: "${commentBody}"`);
         }
     }));
 };

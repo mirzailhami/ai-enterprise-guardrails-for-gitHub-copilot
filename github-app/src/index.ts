@@ -77,16 +77,11 @@ export = (app: Probot) => {
       try {
         // Use PR head commit SHA explicitly
         const commitSha = pr.head.sha;
-        app.log.info(`Fetching commit message for SHA: ${commitSha}`);
-
         const { data: commitData } = await context.octokit.repos.getCommit({
           owner,
           repo,
           ref: commitSha,
         });
-
-        // Log full response for debug
-        app.log.info(`Commit response: ${JSON.stringify(commitData, null, 2)}`);
 
         // Safe access
         commitMsg = commitData?.commit?.message?.toLowerCase() || "";
@@ -164,18 +159,33 @@ export = (app: Probot) => {
   }
 
   app.on("issue_comment.created", async (context: any) => {
-    if (context.payload.comment.body.trim() === "/override") {
-      app.log.info("Override command received");
+    const commentBody = context.payload.comment.body.trim();
+    app.log.info(`Received comment: "${commentBody}" on issue #${context.payload.issue.number}`);
+  
+    if (commentBody === "/override") {
+      app.log.info("Override command received - processing!");
       const pr = context.payload.issue;
-      await context.octokit.repos.createCommitStatus({
-        owner: pr.repository.owner.login,
-        repo: pr.repository.name,
-        sha: pr.pull_request.head.sha,
-        state: "success",
-        context: "Guardrails",
-        description: "Overridden ⚠️",
-      });
-      await context.octokit.issues.createComment(context.issue({ body: "Override approved—proceed with caution." }));
+      
+      try {
+        await context.octokit.repos.createCommitStatus({
+          owner: pr.repository.owner.login,
+          repo: pr.repository.name,
+          sha: pr.pull_request.head.sha,
+          state: "success",
+          context: "Guardrails",
+          description: "Overridden ⚠️",
+        });
+        app.log.info("Status overridden to success");
+        
+        await context.octokit.issues.createComment(context.issue({
+          body: "Override approved—proceed with caution."
+        }));
+        app.log.info("Override reply comment posted");
+      } catch (err) {
+        app.log.error(`Override failed: ${err.message}`);
+      }
+    } else {
+      app.log.info(`Ignored comment: "${commentBody}"`);
     }
   });
 };
