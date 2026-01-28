@@ -125,7 +125,6 @@ module.exports = (app) => {
                         .join("\n")}`;
                     const body = `### Guardrails Scan: ${total} Issues 🚨\n**Policy**: ${policy.toUpperCase()}\n**Copilot Mode**: ${isCopilot ? "Enabled (Stricter Checks)" : "Off"}\n\n${table}\n\n${policy === "blocking" ? "❌ Merge blocked—fix or /override." : "⚠️ Review fixes."}`;
                     yield context.octokit.issues.createComment(context.issue({ body }));
-                    app.log.info("PR comment posted");
                     const state = policy === "blocking" ? "failure" : "success";
                     const desc = isCopilot ? `${total} violations (AI-flagged)` : `${total} violations`;
                     yield context.octokit.repos.createCommitStatus({
@@ -160,31 +159,17 @@ module.exports = (app) => {
     }
     app.on("issue_comment.created", (context) => __awaiter(void 0, void 0, void 0, function* () {
         const commentBody = context.payload.comment.body.trim();
-        app.log.info(`Received comment: "${commentBody}" on issue #${context.payload.issue.number}`);
         if (commentBody !== "/override") {
-            app.log.info(`Ignored comment: "${commentBody}"`);
             return;
         }
         app.log.info("Override command received - processing!");
         try {
-            // Safe way to get owner/repo/sha
-            let owner, repo, sha;
-            // If it's a PR comment, use pull_request context
-            if (context.payload.issue.pull_request) {
-                const pr = context.payload.issue.pull_request;
-                owner = pr.head.repo.owner.login;
-                repo = pr.head.repo.name;
-                sha = pr.head.sha;
-                app.log.info("Detected PR context - using pull_request.head.sha");
-            }
-            else {
-                // Fallback for regular issues
-                owner = context.payload.repository.owner.login;
-                repo = context.payload.repository.name;
-                // For issues, no sha - skip status or use default
-                app.log.warn("Regular issue comment - no sha available for status update");
-                sha = null; // or skip status update
-            }
+            // Fallback for regular issues
+            const owner = context.payload.repository.owner.login;
+            const repo = context.payload.repository.name;
+            // For issues, no sha - skip status or use default
+            app.log.warn("Regular issue comment - no sha available for status update");
+            const sha = null; // or skip status update
             if (!sha) {
                 app.log.warn("No SHA available - skipping status override");
             }
