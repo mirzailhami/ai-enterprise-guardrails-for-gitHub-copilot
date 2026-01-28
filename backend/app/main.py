@@ -14,38 +14,36 @@ app = FastAPI(title="Guardrails Backend")
 class ScanRequest(BaseModel):
     pr_id: str
     diff: str
-    files: List[str]
-    config_path: str = None  # Optional repo YAML
-    is_copilot: bool = False # set true for AI-generated diffs
+    files: List[Dict[str, str]]  # [{path: str, content: str}]
+    config_path: str = None
+    is_copilot: bool = False
 
 @app.post("/scan")
 async def scan_pr(req: ScanRequest):
     config = load_guardrails(req.config_path)
     violations: List[Dict] = []
-    
-    # Secure
+
+    # Secure (pass files with content)
     violations += secure_scan(req.files, config, req.is_copilot)
-    
-    # Standards (assume first file content for MVP; in prod, fetch full files from GitHub API)
-    if req.files:
-        try:
-            with open(req.files[0], 'r') as f:
-                content = f.read()
+
+    # Standards (loop over content)
+    for file_item in req.files:
+        content = file_item.get('content', '')
+        path = file_item.get('path', 'unknown')
+        if content:
             violations += enforce(content, config)
-        except FileNotFoundError:
-            pass  # Skip if test file missing
-    
-    # AI
+            print(f"Scanned {path} - {len(content)} chars")  # Debug
+
+    # AI (unchanged)
     ai_issues = ai_review(req.diff, config)
     violations += ai_issues
-    
-    # License
-    violations += check_license(req.files, config)
-    
-    # Audit
+
+    # License (update to use content)
+    violations += check_license(req.files, config)  # Pass files list
+
     action = config.get('enforcement', 'warning')
     log(req.pr_id, violations, action)
-    
+
     return {"violations": violations, "policy": action, "total": len(violations)}
 
 @app.get("/")

@@ -1,15 +1,16 @@
 from typing import List, Dict
 
-def check_license(files: List[str], config: Dict) -> List[Dict]:
-    restricted = config.get('restricted_licenses', [])
+def check_license(files: List[Dict[str, str]], config: Dict) -> List[Dict]:
+    restricted = config.get('restricted_licenses', ['gpl', 'agpl'])
     violations = []
-    # Simple regex stub: Scan for known license headers
-    for file in files:
-        try:
-            with open(file, 'r') as f:  # Assume local files for test
-                content = f.read()
-            if any(lic in content.lower() for lic in restricted):
-                violations.append({'type': 'license', 'risk': 'Restricted license detected'})
-        except FileNotFoundError:
-            pass  # Skip non-existent files
+    for file_item in files:
+        path = file_item['path']
+        content = file_item.get('content', '').lower()
+        for lic in restricted:
+            if lic in content:
+                violations.append({
+                    'type': 'license',
+                    'description': f'Restricted license "{lic.upper()}" detected in {path}',
+                    'risk': 'Incompatible license'
+                })
     return violations
