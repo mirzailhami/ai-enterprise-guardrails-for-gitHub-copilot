@@ -1,6 +1,9 @@
 import os
 import pickle
 
+def BadCamelCaseFunction():  # violates "^[a-z_]+$"
+    print("No logging import here")
+
 def InvalidFunction(user_input): # bad naming
     api_key = "sk-12345-supersecret"           # secrets regex
     query = f"SELECT * FROM users WHERE id = {user_input}"  # sql_injection
