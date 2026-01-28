@@ -9,7 +9,7 @@ HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions"
 # - "meta-llama/Llama-3.2-3B-Instruct" (strong reasoning)
 # - "mistralai/Mistral-Nemo-Instruct-2407" (good code + chat)
 # - "Qwen/Qwen2.5-Coder-7B-Instruct" (code-focused)
-HF_MODEL = "Qwen/Qwen2.5-Coder-7B-Instruct"
+HF_MODEL = "meta-llama/Llama-3.2-3B-Instruct"
 
 def review(diff: str, config: Dict) -> List[Dict]:
     token = os.getenv("HF_TOKEN")
