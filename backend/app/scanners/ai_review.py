@@ -3,10 +3,7 @@ import json
 import os
 from typing import List, Dict
 
-# Recommended free models (Hugging Face Inference API)
-# - bigcode/starcoder2-7b (code-focused, good for review)
-# - codellama/CodeLlama-7b-Instruct-hf (strong reasoning + fixes)
-HF_MODEL = "bigcode/starcoder2-7b"  # or "codellama/CodeLlama-7b-Instruct-hf"
+HF_MODEL = "bigcode/starcoder2-15b"  #
 HF_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
 
 def review(diff: str, config: Dict) -> List[Dict]:
@@ -17,7 +14,7 @@ def review(diff: str, config: Dict) -> List[Dict]:
 
     focus = ', '.join(config.get('ai_focus', ['security', 'performance', 'maintainability']))
     
-    # Truncate diff to avoid token limits (safe for MVP)
+    # Truncate diff to stay under model limits
     truncated_diff = diff[:3000] + ("... [truncated]" if len(diff) > 3000 else "")
 
     prompt = f"""
@@ -65,9 +62,9 @@ If no issues, return empty array [].
 
         if isinstance(result, list) and result and 'generated_text' in result[0]:
             text = result[0]['generated_text'].strip()
-            print(f"Raw AI response: {text[:200]}...")
+            print(f"Raw AI response preview: {text[:200]}...")
 
-            # Extract JSON array (robust parsing)
+            # Extract JSON array
             start = text.find('[')
             end = text.rfind(']') + 1
             if start != -1 and end > start:
@@ -86,6 +83,8 @@ If no issues, return empty array [].
 
     except requests.RequestException as e:
         print(f"HF API error: {e}")
+        if hasattr(e.response, 'status_code'):
+            print(f"Status code: {e.response.status_code}")
     except Exception as e:
         print(f"AI review failed: {e}")
 
