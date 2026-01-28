@@ -28,6 +28,7 @@ module.exports = (app) => {
     }));
     function handlePR(context, app) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
             const pr = context.payload.pull_request;
             const owner = pr.head.repo.owner.login;
             const repo = pr.head.repo.name;
@@ -79,15 +80,27 @@ module.exports = (app) => {
                 // Fetch commit message
                 let commitMsg = "";
                 try {
-                    const { data: commit } = yield context.octokit.repos.getCommit({
+                    // Use PR head commit SHA explicitly
+                    const commitSha = pr.head.sha;
+                    app.log.info(`Fetching commit message for SHA: ${commitSha}`);
+                    const { data: commitData } = yield context.octokit.repos.getCommit({
                         owner,
                         repo,
-                        ref: sha,
+                        ref: commitSha,
                     });
-                    commitMsg = commit.message.toLowerCase();
+                    // Log full response for debug
+                    app.log.info(`Commit response: ${JSON.stringify(commitData, null, 2)}`);
+                    // Safe access
+                    commitMsg = ((_b = (_a = commitData === null || commitData === void 0 ? void 0 : commitData.commit) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.toLowerCase()) || "";
+                    if (!commitMsg) {
+                        app.log.warn("Commit message was empty or missing in response");
+                    }
                 }
                 catch (err) {
                     app.log.warn(`Failed to fetch commit message: ${err.message}`);
+                    if (err.response) {
+                        app.log.warn(`API response status: ${err.response.status}, data: ${JSON.stringify(err.response.data)}`);
+                    }
                 }
                 const isCopilot = commitMsg.includes("copilot") || commitMsg.includes("ai-generated") || commitMsg.includes("copilot suggestion");
                 app.log.info(`Copilot mode: ${isCopilot}`);

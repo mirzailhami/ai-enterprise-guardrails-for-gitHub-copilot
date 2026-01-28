@@ -75,14 +75,29 @@ export = (app: Probot) => {
       // Fetch commit message
       let commitMsg = "";
       try {
-        const { data: commit } = await context.octokit.repos.getCommit({
+        // Use PR head commit SHA explicitly
+        const commitSha = pr.head.sha;
+        app.log.info(`Fetching commit message for SHA: ${commitSha}`);
+
+        const { data: commitData } = await context.octokit.repos.getCommit({
           owner,
           repo,
-          ref: sha,
+          ref: commitSha,
         });
-        commitMsg = commit.message.toLowerCase();
+
+        // Log full response for debug
+        app.log.info(`Commit response: ${JSON.stringify(commitData, null, 2)}`);
+
+        // Safe access
+        commitMsg = commitData?.commit?.message?.toLowerCase() || "";
+        if (!commitMsg) {
+          app.log.warn("Commit message was empty or missing in response");
+        }
       } catch (err) {
         app.log.warn(`Failed to fetch commit message: ${err.message}`);
+        if (err.response) {
+          app.log.warn(`API response status: ${err.response.status}, data: ${JSON.stringify(err.response.data)}`);
+        }
       }
 
       const isCopilot = commitMsg.includes("copilot") || commitMsg.includes("ai-generated") || commitMsg.includes("copilot suggestion");
