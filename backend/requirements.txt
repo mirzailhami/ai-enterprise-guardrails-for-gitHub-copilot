@@ -5,4 +5,5 @@ semgrep
 bandit==1.7.5
 # scancode-toolkit
 requests==2.31.0
-detect-secrets 
+detect-secrets
+python-dotenv
