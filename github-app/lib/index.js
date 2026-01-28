@@ -167,9 +167,7 @@ module.exports = (app) => {
             // Fallback for regular issues
             const owner = context.payload.repository.owner.login;
             const repo = context.payload.repository.name;
-            // For issues, no sha - skip status or use default
-            app.log.warn("Regular issue comment - no sha available for status update");
-            const sha = null; // or skip status update
+            const sha = context.payload.issue.pull_request.head.sha;
             if (!sha) {
                 app.log.warn("No SHA available - skipping status override");
             }
