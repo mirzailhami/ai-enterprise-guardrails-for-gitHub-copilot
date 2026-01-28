@@ -159,18 +159,22 @@ export = (app: Probot) => {
   }
 
   app.on("issue_comment.created", async (context: any) => {
+    const pr = context.payload.pull_request;
+    const owner = pr.head.repo.owner.login;
+    const repo = pr.head.repo.name;
+    const sha = pr.head.sha;
+
     const commentBody = context.payload.comment.body.trim();
     app.log.info(`Received comment: "${commentBody}" on issue #${context.payload.issue.number}`);
   
     if (commentBody === "/override") {
       app.log.info("Override command received - processing!");
-      const pr = context.payload.issue;
       
       try {
         await context.octokit.repos.createCommitStatus({
-          owner: pr.repository.owner.login,
-          repo: pr.repository.name,
-          sha: pr.pull_request.head.sha,
+          owner,
+          repo,
+          sha,
           state: "success",
           context: "Guardrails",
           description: "Overridden ⚠️",
