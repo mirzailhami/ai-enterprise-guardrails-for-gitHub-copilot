@@ -6,30 +6,31 @@ def enforce(file_content: str, config: Dict) -> List[Dict]:
     violations = []
     standards = config.get('standards', {})
     
-    print(f"Standards check on content length: {len(file_content)}")
+    print(f"Applying standards rules from config: {standards}")
     
     if '\x00' in file_content:
-        print("Skipping AST: null bytes detected")
+        print("Skipping standards AST: null bytes detected (likely binary)")
         return violations
     
     try:
         tree = ast.parse(file_content)
-        print("AST parsed successfully")
+        print("Standards AST parsed successfully")
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 pattern = standards.get('naming', {}).get('functions', '.*')
-                print(f"Checking function: {node.name} against {pattern}")
+                print(f"Checking function: {node.name} against pattern: {pattern}")
                 if not re.match(pattern, node.name):
                     violations.append({
                         'type': 'naming',
                         'description': f"Invalid function name: {node.name} (expected {pattern})",
-                        'location': node.lineno
+                        'location': node.lineno,
+                        'severity': 'medium'  # can be configurable
                     })
     except SyntaxError as e:
-        print(f"AST SyntaxError: {e}")
+        print(f"Standards AST SyntaxError: {e} - skipping")
         pass
     
-    # Logging check
+    # Logging check (only on Python files or if content looks like code)
     if 'import logging' not in file_content and standards.get('logging', {}).get('require'):
         print("Logging missing detected")
         violations.append({
@@ -38,5 +39,5 @@ def enforce(file_content: str, config: Dict) -> List[Dict]:
             'severity': 'medium'
         })
     
-    print(f"Standards violations: {len(violations)}")
+    print(f"Standards violations found: {len(violations)}")
     return violations

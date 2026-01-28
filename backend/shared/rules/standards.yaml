@@ -1,0 +1,11 @@
+naming:
+  functions:
+    pattern: "^[a-z_]+$"
+    description: "Functions must use snake_case"
+    severity: medium
+
+logging:
+  require:
+    pattern: "import logging"
+    description: "Logging module must be imported"
+    severity: medium
