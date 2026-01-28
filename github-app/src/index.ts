@@ -15,7 +15,6 @@ export = (app: Probot) => {
   });
 
   app.on("pull_request.synchronize", async (context: any) => {
-    app.log.info("pull_request.synchronize triggered! (new push)");
     await handlePR(context, app);
   });
 
@@ -159,18 +158,39 @@ export = (app: Probot) => {
   }
 
   app.on("issue_comment.created", async (context: any) => {
-    const pr = context.payload.issue;
-    const owner = pr.repository.owner.login;
-    const repo = pr.repository.name;
-    const sha = pr.pull_request.head.sha;
-
     const commentBody = context.payload.comment.body.trim();
     app.log.info(`Received comment: "${commentBody}" on issue #${context.payload.issue.number}`);
   
-    if (commentBody === "/override") {
-      app.log.info("Override command received - processing!");
-      
-      try {
+    if (commentBody !== "/override") {
+      app.log.info(`Ignored comment: "${commentBody}"`);
+      return;
+    }
+  
+    app.log.info("Override command received - processing!");
+  
+    try {
+      // Safe way to get owner/repo/sha
+      let owner, repo, sha;
+  
+      // If it's a PR comment, use pull_request context
+      if (context.payload.issue.pull_request) {
+        const pr = context.payload.issue.pull_request;
+        owner = pr.head.repo.owner.login;
+        repo = pr.head.repo.name;
+        sha = pr.head.sha;
+        app.log.info("Detected PR context - using pull_request.head.sha");
+      } else {
+        // Fallback for regular issues
+        owner = context.payload.repository.owner.login;
+        repo = context.payload.repository.name;
+        // For issues, no sha - skip status or use default
+        app.log.warn("Regular issue comment - no sha available for status update");
+        sha = null; // or skip status update
+      }
+  
+      if (!sha) {
+        app.log.warn("No SHA available - skipping status override");
+      } else {
         await context.octokit.repos.createCommitStatus({
           owner,
           repo,
@@ -180,16 +200,19 @@ export = (app: Probot) => {
           description: "Overridden ⚠️",
         });
         app.log.info("Status overridden to success");
-        
-        await context.octokit.issues.createComment(context.issue({
-          body: "Override approved—proceed with caution."
-        }));
-        app.log.info("Override reply comment posted");
-      } catch (err) {
-        app.log.error(`Override failed: ${err.message}`);
       }
-    } else {
-      app.log.info(`Ignored comment: "${commentBody}"`);
+  
+      // Always post reply comment
+      await context.octokit.issues.createComment(context.issue({
+        body: "Override approved—proceed with caution."
+      }));
+      app.log.info("Override reply comment posted");
+  
+    } catch (err) {
+      app.log.error(`Override failed: ${err.message}`);
+      if (err.response) {
+        app.log.error(`API error details: ${JSON.stringify(err.response.data)}`);
+      }
     }
   });
 };
