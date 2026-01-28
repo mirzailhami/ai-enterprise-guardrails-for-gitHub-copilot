@@ -3,12 +3,12 @@ import os
 from typing import Dict
 
 def load_guardrails(config_path: str = None) -> Dict:
-    # Force use of shared/configs (ignore incoming config_path for now)
+    # Correct project root (up 3 levels from app/ to root)
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     default_path = os.path.join(project_root, "shared", "configs", "guardrails.yaml")
     
     print(f"Project root detected: {project_root}")
-    print(f"Attempting to load from default: {default_path}")
+    print(f"Attempting to load from: {default_path}")
     
     if os.path.exists(default_path):
         try:
@@ -19,7 +19,7 @@ def load_guardrails(config_path: str = None) -> Dict:
         except Exception as e:
             print(f"YAML load error: {e}")
     else:
-        print("Default config file not found at {default_path}")
+        print(f"Config file not found at {default_path}")
     
     print("Falling back to defaults")
     return {
