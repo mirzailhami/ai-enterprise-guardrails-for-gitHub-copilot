@@ -1,5 +1,4 @@
 # AI-Powered Enterprise Guardrails for GitHub Copilot
-TopCoder Challenge Submission
 
 This MVP provides enterprise-grade guardrails for GitHub Copilot, ensuring secure, compliant, and high-quality code in production workflows. It scans both AI-generated and human-written code in PRs, detects risks (security, standards, licensing), flags Copilot-specific issues, enforces customizable policies, and logs audits — all while staying developer-friendly.
 
@@ -31,7 +30,7 @@ https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/
 
 ### Architecture Diagram
 
-```mermaid
+```
 flowchart TD
     A["GitHub Repo/PR Event<br>(opened, reopened, synchronize)"]
     B["Probot GitHub App (TypeScript)"]
@@ -71,6 +70,7 @@ flowchart TD
     P --> Q
     P --> R
     P --> S
+```
 
 ### Quick Start (Local Dev)
 
