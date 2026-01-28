@@ -3,8 +3,13 @@ import json
 import os
 from typing import List, Dict
 
-HF_MODEL = "bigcode/starcoder2-15b"  #
-HF_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
+HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions"
+
+# Options:
+# - "meta-llama/Llama-3.2-3B-Instruct" (strong reasoning)
+# - "mistralai/Mistral-Nemo-Instruct-2407" (good code + chat)
+# - "Qwen/Qwen2.5-Coder-7B-Instruct" (code-focused)
+HF_MODEL = "Qwen/Qwen2.5-Coder-7B-Instruct"
 
 def review(diff: str, config: Dict) -> List[Dict]:
     token = os.getenv("HF_TOKEN")
@@ -13,40 +18,33 @@ def review(diff: str, config: Dict) -> List[Dict]:
         return []
 
     focus = ', '.join(config.get('ai_focus', ['security', 'performance', 'maintainability']))
-    
-    # Truncate diff to stay under model limits
-    truncated_diff = diff[:3000] + ("... [truncated]" if len(diff) > 3000 else "")
 
-    prompt = f"""
-You are a senior security and code quality engineer reviewing this code diff for {focus}.
+    # Truncate diff to avoid token limits
+    truncated_diff = diff[:4000] + ("... [truncated]" if len(diff) > 4000 else "")
 
-Diff:
-{truncated_diff}
-
-Output **only** a valid JSON array of issues. Each issue must have:
-- "issue": short description of the problem
-- "explanation": why it's an issue (security/performance/maintainability impact)
-- "fix": suggested compliant code fix (snippet or change)
-- "reference": link to standard (e.g., OWASP, CWE)
-
-Example:
-[
-  {{"issue": "Hardcoded API key", "explanation": "Risk of exposure", "fix": "Use os.getenv('API_KEY')", "reference": "OWASP A07:2021"}},
-  ...
-]
-
-If no issues, return empty array [].
-"""
+    messages = [
+        {
+            "role": "system",
+            "content": f"You are a senior security and code quality engineer. Review the code diff for {focus}. "
+                       "Output ONLY a valid JSON array of issues. Each issue must have: "
+                       '"issue": short description, '
+                       '"explanation": why it\'s an issue, '
+                       '"fix": suggested fix snippet, '
+                       '"reference": standard link (e.g. OWASP). '
+                       "If no issues, return []."
+        },
+        {
+            "role": "user",
+            "content": f"Code diff to review:\n{truncated_diff}"
+        }
+    ]
 
     payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 500,
-            "temperature": 0.1,
-            "top_p": 0.9,
-            "do_sample": False,
-            "return_full_text": False
-        }
+        "model": HF_MODEL,
+        "messages": messages,
+        "temperature": 0.1,
+        "max_tokens": 600,
+        "stream": False
     }
 
     headers = {
@@ -55,13 +53,14 @@ If no issues, return empty array [].
     }
 
     try:
-        print(f"Calling HF model: {HF_MODEL} for AI review")
-        response = requests.post(HF_URL, headers=headers, json=payload, timeout=45)
+        print(f"Calling HF router with model: {HF_MODEL}")
+        response = requests.post(HF_ROUTER_URL, headers=headers, json=payload, timeout=60)
         response.raise_for_status()
         result = response.json()
 
-        if isinstance(result, list) and result and 'generated_text' in result[0]:
-            text = result[0]['generated_text'].strip()
+        # Extract assistant's response
+        if 'choices' in result and result['choices']:
+            text = result['choices'][0]['message']['content'].strip()
             print(f"Raw AI response preview: {text[:200]}...")
 
             # Extract JSON array
@@ -79,13 +78,14 @@ If no issues, return empty array [].
             else:
                 print("No JSON array found in AI response")
         else:
-            print("Unexpected AI response format")
+            print("Unexpected response format")
 
+    except requests.HTTPError as e:
+        print(f"HF router HTTP error: {e.response.status_code} {e.response.reason}")
+        print(f"Response body: {e.response.text[:500]}...")
     except requests.RequestException as e:
-        print(f"HF API error: {e}")
-        if hasattr(e.response, 'status_code'):
-            print(f"Status code: {e.response.status_code}")
+        print(f"HF router request failed: {e}")
     except Exception as e:
         print(f"AI review failed: {e}")
 
-    return []  # Fallback: no AI issues
+    return []  # Fallback
