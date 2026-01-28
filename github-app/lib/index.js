@@ -164,25 +164,26 @@ module.exports = (app) => {
         }
         app.log.info("Override command received - processing!");
         try {
-            // Fallback for regular issues
+            const prNumber = context.payload.issue.number;
             const owner = context.payload.repository.owner.login;
             const repo = context.payload.repository.name;
-            const sha = context.payload.issue.pull_request.head.sha;
-            if (!sha) {
-                app.log.warn("No SHA available - skipping status override");
-            }
-            else {
-                yield context.octokit.repos.createCommitStatus({
-                    owner,
-                    repo,
-                    sha,
-                    state: "success",
-                    context: "Guardrails",
-                    description: "Overridden ⚠️",
-                });
-                app.log.info("Status overridden to success");
-            }
-            // Always post reply comment
+            // Re-fetch the PR to get the current head SHA (reliable!)
+            const { data: pr } = yield context.octokit.pulls.get({
+                owner,
+                repo,
+                pull_number: prNumber,
+            });
+            const sha = pr.head.sha;
+            app.log.info(`Fetched current PR head SHA: ${sha}`);
+            yield context.octokit.repos.createCommitStatus({
+                owner,
+                repo,
+                sha,
+                state: "success",
+                context: "Guardrails",
+                description: "Overridden ⚠️",
+            });
+            app.log.info("Status overridden to success");
             yield context.octokit.issues.createComment(context.issue({
                 body: "Override approved—proceed with caution."
             }));
@@ -191,8 +192,12 @@ module.exports = (app) => {
         catch (err) {
             app.log.error(`Override failed: ${err.message}`);
             if (err.response) {
-                app.log.error(`API error details: ${JSON.stringify(err.response.data)}`);
+                app.log.error(`API details: ${JSON.stringify(err.response.data)}`);
             }
+            // Still post reply even if status fails
+            yield context.octokit.issues.createComment(context.issue({
+                body: "Override approved (status update failed, but proceed with caution)."
+            }));
         }
     }));
 };
