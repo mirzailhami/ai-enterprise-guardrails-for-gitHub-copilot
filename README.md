@@ -1,5 +1,5 @@
 # AI-Powered Enterprise Guardrails for GitHub Copilot
-Topcoder Challenge Submission
+[Topcoder Challenge Submission](https://www.topcoder.com/challenges/54a459e5-ddc4-4e56-8fe9-09e0b5506e95?tab=details)
 
 This MVP provides enterprise-grade guardrails for GitHub Copilot, ensuring secure, compliant, and high-quality code in production workflows. It scans both AI-generated and human-written code in PRs, detects risks (security, standards, licensing, IP), flags Copilot-specific issues, enforces customizable policies, provides AI-assisted explanations and fixes, and logs audits — all while staying developer-friendly and scalable.
 
@@ -33,6 +33,7 @@ https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/
 - Table with filename in Description (e.g., "Insecure deserialization with pickle.loads in backend/test.py"), AI fixes in Details
 
 ### Architecture Diagram
+```
 flowchart TD
     A["GitHub Repo/PR Event<br>(opened, reopened, synchronize)"]
     B["Probot GitHub App (TypeScript)"]
@@ -72,6 +73,7 @@ flowchart TD
     P --> Q
     P --> R
     P --> S
+```
 
 ### Quick Start (Local Deployment Guide)
 
@@ -96,8 +98,7 @@ flowchart TD
 
 4. Update GitHub App
    Go to https://github.com/settings/apps/ai-enterprise-guardrails
-   Edit → Webhook URL: paste ngrok HTTPS
-   Save
+   Edit → Webhook URL: paste ngrok HTTPS → Save
 
 5. Install app on your repo
    App page → Install App → Select ai-enterprise-guardrails-for-gitHub-copilot
@@ -105,6 +106,7 @@ flowchart TD
 
 ### Configuration
 All rules/policies loaded from shared/configs/guardrails.yaml:
+```
 enforcement: blocking           # advisory / warning / blocking
 standards:
   naming:
@@ -113,6 +115,7 @@ standards:
     require: "import logging"   # must import logging
 ai_focus: [security, performance]
 restricted_licenses: [gpl-3.0, agpl-3.0]
+```
 
 ### Bonus Features
 - Visual Audit Dashboard: http://localhost:8000/dashboard (HTML summary of audits)
