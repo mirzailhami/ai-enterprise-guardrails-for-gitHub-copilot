@@ -13,4 +13,4 @@ def InvalidFunction(user_input): # bad naming
     print(query)                                # logging missing
     print("No logging here")
     
-def InvalidFunction(user_input): # duplicate
+def InvalidFunction(user_input): # function duplicate
