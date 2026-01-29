@@ -1,15 +1,19 @@
+import os
+import sqlite3
+from .utils.audit import init_db
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Dict
-import os
 from .utils.config import load_guardrails
 from .utils.audit import log
 from .scanners.secure import scan as secure_scan
 from .scanners.standards import enforce
 from .scanners.ai_review import review as ai_review
 from .compliance.license import check_license
+from .compliance.ip_compliance import check_ip_risk
 
 app = FastAPI(title="Guardrails Backend")
+init_db()
 
 class ScanRequest(BaseModel):
     pr_id: str
@@ -38,14 +42,40 @@ async def scan_pr(req: ScanRequest):
     ai_issues = ai_review(req.diff, config)
     violations += ai_issues
 
-    # License (update to use content)
-    violations += check_license(req.files, config)  # Pass files list
+    # License
+    violations += check_license(req.files, config)
+    
+    # IP Risk
+    violations += check_ip_risk(req.files, config)
 
     action = config.get('enforcement', 'warning')
     log(req.pr_id, violations, action)
 
     return {"violations": violations, "policy": action, "total": len(violations)}
 
+@app.get("/audit/{pr_id}")
+def get_audit(pr_id: str):
+    conn = sqlite3.connect("audit.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM audits WHERE pr_id = ?", (pr_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return {"audits": [dict(zip([col[0] for col in cursor.description], row)) for row in rows]}
+
+@app.get("/dashboard")
+def dashboard():
+    conn = sqlite3.connect("audit.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT pr_id, violations_count, action, resolution FROM audits ORDER BY timestamp DESC")
+    rows = cursor.fetchall()
+    conn.close()
+    return {
+        "audits": [
+            {"pr_id": r[0], "violations": r[1], "action": r[2], "resolution": r[3]}
+            for r in rows
+        ]
+    }
+    
 @app.get("/")
 def root():
     return {"msg": "Guardrails Backend Ready 🚀"}
