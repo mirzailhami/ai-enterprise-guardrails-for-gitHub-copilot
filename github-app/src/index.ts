@@ -165,10 +165,12 @@ export = (app: Probot) => {
               if (v.fix) details.push(`Fix: ${v.fix}`);
               if (v.explanation) details.push(`Expl: ${v.explanation}`);
               if (v.reference) details.push(`Ref: ${v.reference}`);
-              if (v.cwe || v.owasp)
-                details.push(`${v.cwe || ""} ${v.owasp || ""}`.trim());
               const detailsText =
-                details.length > 0 ? details.join(" | ") : "N/A";
+                details.length > 0
+                  ? details.join(" | ")
+                  : v.cwe || v.owasp
+                  ? `${v.cwe || ""} ${v.owasp || ""}`.trim()
+                  : "N/A";
 
               return `| ${type} | ${desc} | ${loc} | ${sev} | ${copilot} | ${detailsText} |`;
             })
