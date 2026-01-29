@@ -4,9 +4,8 @@ import os
 import re
 from typing import List, Dict
 
-# Active hosted model (Jan 2026) – good for code review & fixes
 HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions"
-HF_MODEL = "meta-llama/Llama-3.2-3B-Instruct"  # Your current working model
+HF_MODEL = "meta-llama/Llama-3.2-3B-Instruct"
 
 def review(diff: str, config: Dict) -> List[Dict]:
     token = os.getenv("HF_TOKEN")
@@ -24,14 +23,14 @@ def review(diff: str, config: Dict) -> List[Dict]:
             "content": (
                 f"You are a senior security and code quality engineer. "
                 f"Review the code diff for {focus}. "
-                "Output **only** a valid JSON array of issues. "
+                "Output ONLY a valid JSON array of issues. "
                 "Each issue must have: "
                 '"issue": short description, '
                 '"explanation": why it\'s an issue, '
                 '"fix": suggested fix snippet, '
-                '"reference": link to standard (OWASP, CWE, etc.). '
-                "If no issues, return empty array []. "
-                "Do not add markdown or extra text."
+                '"reference": link to standard (e.g. OWASP, CWE). '
+                "If no issues, return []. "
+                "Do NOT add markdown, code fences, explanations, or extra text."
             )
         },
         {
@@ -60,22 +59,24 @@ def review(diff: str, config: Dict) -> List[Dict]:
         result = response.json()
 
         if "choices" in result and result["choices"]:
-            text = result["choices"][0]["message"]["content"].strip()
-            print(f"Raw AI response preview: {text[:300]}...")
+            raw_text = result["choices"][0]["message"]["content"].strip()
+            print(f"Raw AI response preview: {raw_text[:300]}...")
 
-            # Clean markdown fences (```json ... ```) if present
-            text = re.sub(r'^```json\s*|\s*```$', '', text, flags=re.IGNORECASE | re.MULTILINE).strip()
+            # Step 1: Remove markdown code fences (```json ... ```) if present
+            cleaned_text = re.sub(r'^```json\s*|\s*```$', '', raw_text, flags=re.IGNORECASE | re.MULTILINE).strip()
 
-            # Find first valid JSON array
-            match = re.search(r'\[.*\]', text, re.DOTALL)
+            # Step 2: Find the first valid JSON array (handles extra whitespace)
+            match = re.search(r'\[\s*(?:{.*?}\s*,\s*)*{.*?}\s*\]', cleaned_text, re.DOTALL)
             if match:
                 json_str = match.group(0)
+                print(f"Extracted JSON string preview: {json_str[:200]}...")
+
                 try:
                     issues = json.loads(json_str)
                     if not isinstance(issues, list):
-                        raise ValueError("Root is not a list")
+                        raise ValueError("Parsed root is not a list")
 
-                    # Filter only valid issues (must have 'issue' key and non-empty value)
+                    # Filter only valid issues
                     valid_issues = [
                         i for i in issues
                         if isinstance(i, dict) and 'issue' in i and i['issue'].strip()
@@ -83,9 +84,9 @@ def review(diff: str, config: Dict) -> List[Dict]:
                     print(f"AI review found {len(valid_issues)} valid issues (filtered from {len(issues)})")
                     return valid_issues
                 except (json.JSONDecodeError, ValueError) as e:
-                    print(f"JSON parse error: {e} - raw JSON string: {json_str[:200]}...")
+                    print(f"JSON parse error: {e} - raw extracted: {json_str[:200]}...")
             else:
-                print("No JSON array found in AI response")
+                print("No valid JSON array found in cleaned response")
 
         else:
             print("Unexpected response format from HF router")
