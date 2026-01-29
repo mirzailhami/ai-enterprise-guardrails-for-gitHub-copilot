@@ -1,4 +1,4 @@
-enforcement: warning  # advisory/warning/blocking
+enforcement: blocking  # advisory/warning/blocking
 standards:
   naming:
     functions: "^[a-z_]+$"

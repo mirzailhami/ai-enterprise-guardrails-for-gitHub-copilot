@@ -1,0 +1,9 @@
+enforcement: warning
+secure:
+  insecure_deserial:
+    - pattern: "pickle\\.loads"
+      type: insecure_deserial
+      description: "Insecure deserialization (HIPAA risk)"
+      severity: high
+      cwe: CWE-502
+      owasp: A08:2021

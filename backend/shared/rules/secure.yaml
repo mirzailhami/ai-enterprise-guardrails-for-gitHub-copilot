@@ -1,0 +1,43 @@
+secrets:
+  - pattern: "sk-\\w{20,}"
+    type: secrets
+    description: "Standalone OpenAI/HF secret detected"
+    severity: high
+    cwe: CWE-798
+    owasp: A07:2021
+  - pattern: "api_key\\s*=\\s*[\"'][\\w\\-]+[\"']"
+    type: secrets
+    description: "Hardcoded API key assignment"
+    severity: high
+    cwe: CWE-798
+    owasp: A07:2021
+
+sql_injection:
+  - pattern: "SELECT\\s+\\*.*f[\\\"']?\\{[^}]+\\}[\\\"']?"
+    type: sql_injection
+    description: "Potential SQL injection via f-string"
+    severity: high
+    cwe: CWE-89
+    owasp: A03:2021
+
+unsafe_exec:
+  - pattern: "os\\.system\\s*\\("
+    type: unsafe_exec
+    description: "Unsafe use of os.system (command injection risk)"
+    severity: high
+    cwe: CWE-78
+    owasp: A03:2021
+  - pattern: "exec\\s*\\("
+    type: unsafe_exec
+    description: "Unsafe exec/eval call"
+    severity: high
+    cwe: CWE-95
+    owasp: A03:2021
+
+insecure_deserial:
+  - pattern: "pickle\\.loads"
+    type: insecure_deserial
+    description: "Insecure deserialization with pickle.loads"
+    severity: high
+    cwe: CWE-502
+    owasp: A08:2021

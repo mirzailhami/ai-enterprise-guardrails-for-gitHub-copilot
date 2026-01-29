@@ -1,0 +1,19 @@
+enforcement: blocking
+standards:
+  naming:
+    functions: "^[a-z_]+$"  # strict
+secure:
+  secrets:
+    - pattern: "api_key\\s*=\\s*[\"'][\\w\\-]+[\"']"
+      type: secrets
+      description: "Hardcoded banking API key"
+      severity: high
+      cwe: CWE-798
+      owasp: A07:2021
+  sql_injection:
+    - pattern: "SELECT.*\\+.*user_input"
+      type: sql_injection
+      description: "SQL injection risk in banking query"
+      severity: high
+      cwe: CWE-89
+      owasp: A03:2021

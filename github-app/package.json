@@ -9,10 +9,10 @@
     "dev": "npm run build && npm start"
   },
   "dependencies": {
-    "@octokit/rest": "^19.0.13",
+    "@octokit/rest": "^19.0.0",
     "@probot/octokit-plugin-config": "^4.1.0",
-    "node-fetch": "^2.7.0",
-    "probot": "^13.1.2"
+    "node-fetch": "^2.6.0",
+    "probot": "^12.4.0"
   },
   "devDependencies": {
     "@types/node": "^16.18.126",
