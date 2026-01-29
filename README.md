@@ -126,8 +126,3 @@ restricted_licenses: [gpl-3.0, agpl-3.0]
   - Override comment + green status
   - Probot logs (scan + posted)
   - Backend logs (config loaded + violations)
-
-### What's Next (Optional Polish)
-- Add Hugging Face AI review (HF_TOKEN in backend → explanations/fixes)
-- Export audit logs to CSV (add endpoint in main.py)
-- Pre-built rule packs for banking/healthcare (YAML files in shared/rules/)

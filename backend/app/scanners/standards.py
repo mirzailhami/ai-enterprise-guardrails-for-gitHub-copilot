@@ -32,8 +32,8 @@ def enforce(file_content: str, config: Dict) -> List[Dict]:
         pass
     
     # Logging check (only on Python files or if content looks like code)
-    if 'import logging' not in file_content and standards.get('logging', {}).get('require'):
-        print("Logging missing detected")
+    if file_path.lower().endswith('.py') and 'import logging' not in file_content and standards.get('logging', {}).get('require'):
+        print("Logging missing detected in Python file")
         violations.append({
             'type': 'logging',
             'description': 'Missing logging import',
