@@ -12,3 +12,5 @@ def InvalidFunction(user_input): # bad naming
     pickle.loads(user_input.encode())           # insecure_deserial AST
     print(query)                                # logging missing
     print("No logging here")
+    
+def InvalidFunction(user_input): # duplicate
