@@ -121,19 +121,3 @@ def review(diff: str, config: Dict) -> List[Dict]:
         print(f"HF router request failed: {e}")
     except Exception as e:
         print(f"AI review failed: {e}")
-
-    # Fallback (comment out after success)
-    print("AI review failed - using fallback test issues")
-    return [
-        {
-            'type': 'ai_review',
-            'description': 'Test AI issue from fallback',
-            'explanation': 'Test explanation',
-            'fix': 'Test fix suggestion',
-            'reference': 'Test OWASP link',
-            'severity': 'medium',
-            'location': 'N/A',
-            'copilot_flag': False,
-            'file_path': 'PR diff'
-        }
-    ]
