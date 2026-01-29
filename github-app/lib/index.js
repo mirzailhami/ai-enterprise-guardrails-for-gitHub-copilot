@@ -149,11 +149,9 @@ module.exports = (app) => {
                                 details.push(`Expl: ${v.explanation}`);
                             if (v.reference)
                                 details.push(`Ref: ${v.reference}`);
-                            const detailsText = details.length > 0
-                                ? details.join(" | ")
-                                : v.cwe || v.owasp
-                                    ? `${v.cwe || ""} ${v.owasp || ""}`.trim()
-                                    : "N/A";
+                            if (v.cwe || v.owasp)
+                                details.push(`${v.cwe || ""} ${v.owasp || ""}`.trim());
+                            const detailsText = details.length > 0 ? details.join(" | ") : "N/A";
                             return `| ${type} | ${desc} | ${loc} | ${sev} | ${copilot} | ${detailsText} |`;
                         })
                             .join("\n");
