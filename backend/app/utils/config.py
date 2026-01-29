@@ -3,7 +3,6 @@ import os
 from typing import Dict
 
 def load_guardrails(config_path: str = None) -> Dict:
-    # Correct project root (up 3 levels from app/ to root)
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     default_path = os.path.join(project_root, "shared", "configs", "guardrails.yaml")
     
