@@ -3,12 +3,7 @@ import json
 import os
 import re
 from typing import List, Dict
-
-# Install once: pip install json-repair
-try:
-    from json_repair import repair_json
-except ImportError:
-    repair_json = None  # fallback if not installed
+from json_repair import repair_json
 
 HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions"
 HF_MODEL = "meta-llama/Llama-3.2-3B-Instruct"

@@ -24,7 +24,7 @@ Key differentiators: Copilot awareness (stricter flagging with 🚨), policy mod
 - Developer-friendly: Clear explanations, fix suggestions, minimal disruption, override escape hatch
 
 ### Live Demo PR (Real Scan & Enforcement)
-https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/2
+https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/3
 
 - 38 violations detected (secure + standards + license/IP + AI)
 - Copilot Mode: Enabled (from commit message keyword)
@@ -127,7 +127,7 @@ restricted_licenses: [gpl-3.0, agpl-3.0]
 - Deployed URLs:
   - Backend: http://localhost:8000/docs (Swagger UI)
   - Probot webhook: https://4a0b241fab57.ngrok-free.app (ngrok tunnel)
-- Demo PR: https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/2
+- Demo PR: https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/3
   - Shows real scan, table comment with filenames, Copilot flagging, blocking status, override success
 - Screenshots (in docs/ folder):
   - PR comment with violation table
