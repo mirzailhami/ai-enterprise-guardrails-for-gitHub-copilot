@@ -153,33 +153,26 @@ export = (app: Probot) => {
           violations
             .map((v: any) => {
               const type = v.type || v.issue || "ai_review";
-              const fileInfo =
-                v.file_path &&
-                v.file_path !== "N/A" &&
-                v.file_path !== "PR diff"
-                  ? ` in ${v.file_path}`
-                  : "";
+              const fileInfo = v.file_path ? ` in ${v.file_path}` : "";
               const desc =
                 (v.description || v.issue || "AI-detected issue") + fileInfo;
               const loc = v.location || "N/A";
               const sev = v.severity || "medium";
               const copilot = v.copilot_flag ? "🚨 Yes" : "No";
 
-              // Details: prioritize AI, fallback for static
-              let details = "";
-              if (v.fix) {
-                details = `Fix: ${v.fix}`;
-              } else if (v.explanation) {
-                details = `Expl: ${v.explanation}`;
-              } else if (v.reference) {
-                details = `Ref: ${v.reference}`;
-              } else if (v.cwe || v.owasp) {
-                details = `${v.cwe || ""} ${v.owasp || ""}`.trim();
-              } else {
-                details = "N/A";
-              }
+              // Details: show all AI fields
+              const details = [];
+              if (v.fix) details.push(`Fix: ${v.fix}`);
+              if (v.explanation) details.push(`Expl: ${v.explanation}`);
+              if (v.reference) details.push(`Ref: ${v.reference}`);
+              const detailsText =
+                details.length > 0
+                  ? details.join(" | ")
+                  : v.cwe || v.owasp
+                  ? `${v.cwe || ""} ${v.owasp || ""}`.trim()
+                  : "N/A";
 
-              return `| ${type} | ${desc} | ${loc} | ${sev} | ${copilot} | ${details} |`;
+              return `| ${type} | ${desc} | ${loc} | ${sev} | ${copilot} | ${detailsText} |`;
             })
             .join("\n");
         const body = `### Guardrails Scan: ${total} Issues 🚨\n**Policy**: ${policy.toUpperCase()}\n**Copilot Mode**: ${
