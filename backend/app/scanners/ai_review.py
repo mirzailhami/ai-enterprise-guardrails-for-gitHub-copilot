@@ -23,14 +23,9 @@ def review(diff: str, config: Dict) -> List[Dict]:
             "content": (
                 f"You are a senior security and code quality engineer. "
                 f"Review the code diff for {focus}. "
-                "Output ONLY a valid JSON array of issues. "
-                "Each issue must have: "
-                '"issue": short description, '
-                '"explanation": why it\'s an issue, '
-                '"fix": suggested fix snippet, '
-                '"reference": link to standard (e.g. OWASP, CWE). '
-                "If no issues, return []. "
-                "Do NOT add markdown, code fences, explanations, or extra text."
+                "Respond with **ONLY** the JSON array — no markdown, no code fences, no extra text, no explanations outside JSON. "
+                'Format: [{"issue": "short description", "explanation": "why", "fix": "suggested fix", "reference": "link"}, ...] '
+                "If no issues, return []."
             )
         },
         {
@@ -43,7 +38,7 @@ def review(diff: str, config: Dict) -> List[Dict]:
         "model": HF_MODEL,
         "messages": messages,
         "temperature": 0.1,
-        "max_tokens": 800,
+        "max_tokens": 2000,
         "stream": False
     }
 
@@ -54,29 +49,31 @@ def review(diff: str, config: Dict) -> List[Dict]:
 
     try:
         print(f"Calling HF router with model: {HF_MODEL}")
-        response = requests.post(HF_ROUTER_URL, headers=headers, json=payload, timeout=60)
+        response = requests.post(HF_ROUTER_URL, headers=headers, json=payload, timeout=90)  # Longer timeout
         response.raise_for_status()
         result = response.json()
 
         if "choices" in result and result["choices"]:
             raw_text = result["choices"][0]["message"]["content"].strip()
-            print(f"Raw AI response preview: {raw_text[:300]}...")
+            print(f"Raw AI response preview (first 500 chars): {raw_text[:500]}...")
 
-            # Step 1: Remove markdown code fences (```json ... ```) if present
+            # Clean markdown fences
             cleaned_text = re.sub(r'^```json\s*|\s*```$', '', raw_text, flags=re.IGNORECASE | re.MULTILINE).strip()
 
-            # Step 2: Find the first valid JSON array (handles extra whitespace)
-            match = re.search(r'\[\s*(?:{.*?}\s*,\s*)*{.*?}\s*\]', cleaned_text, re.DOTALL)
+            # More forgiving match: find any [ ... ] block
+            match = re.search(r'\[.*?(?=\]|\Z)', cleaned_text, re.DOTALL | re.MULTILINE)
             if match:
                 json_str = match.group(0)
-                print(f"Extracted JSON string preview: {json_str[:200]}...")
+                # Auto-close if truncated
+                if not json_str.strip().endswith(']'):
+                    json_str += ']}'  # close last object and array
+                print(f"Extracted & auto-closed JSON preview: {json_str[:300]}...")
 
                 try:
                     issues = json.loads(json_str)
                     if not isinstance(issues, list):
-                        raise ValueError("Parsed root is not a list")
+                        raise ValueError("Root is not a list")
 
-                    # Filter only valid issues
                     valid_issues = []
                     for i in issues:
                         if not isinstance(i, dict) or 'issue' not in i:
@@ -87,29 +84,43 @@ def review(diff: str, config: Dict) -> List[Dict]:
                             'explanation': i.get('explanation', ''),
                             'fix': i.get('fix', ''),
                             'reference': i.get('reference', 'N/A'),
-                            'severity': 'medium',  # Default or from config
+                            'severity': 'medium',
                             'location': 'N/A',
-                            'copilot_flag': False,  # AI review is separate from Copilot flag
-                            'file_path': 'PR diff'  # or 'N/A'
+                            'copilot_flag': False,
+                            'file_path': 'PR diff'
                         }
                         valid_issues.append(normalized)
 
                     print(f"AI review found {len(valid_issues)} valid normalized issues")
                     return valid_issues
                 except (json.JSONDecodeError, ValueError) as e:
-                    print(f"JSON parse error: {e} - raw extracted: {json_str[:200]}...")
+                    print(f"JSON parse error: {e} - raw extracted: {json_str[:500]}...")
             else:
-                print("No valid JSON array found in cleaned response")
+                print("No array-like structure found in cleaned response - full cleaned preview:")
+                print(cleaned_text[:800] + "..." if len(cleaned_text) > 800 else cleaned_text)
 
         else:
             print("Unexpected response format from HF router")
 
     except requests.HTTPError as e:
         print(f"HF router HTTP error: {e.response.status_code} {e.response.reason}")
-        print(f"Response body: {e.response.text[:500]}...")
+        print(f"Response body preview: {e.response.text[:500]}...")
     except requests.RequestException as e:
         print(f"HF router request failed: {e}")
     except Exception as e:
         print(f"AI review failed: {e}")
 
-    return []  # Fallback: no AI issues
+    print("AI review failed - using fallback test issues")
+    return [
+        {
+            'type': 'ai_review',
+            'description': 'Test AI issue from fallback',
+            'explanation': 'Test explanation',
+            'fix': 'Test fix suggestion',
+            'reference': 'Test OWASP link',
+            'severity': 'medium',
+            'location': 'N/A',
+            'copilot_flag': False,
+            'file_path': 'PR diff'
+        }
+    ]
