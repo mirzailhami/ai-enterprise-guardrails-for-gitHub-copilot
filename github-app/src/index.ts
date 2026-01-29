@@ -19,11 +19,20 @@ export = (app: Probot) => {
   });
 
   async function handlePR(context: any, app: Probot) {
+    let configPath = ".github/guardrails.yaml"; // Default
+
     const pr = context.payload.pull_request;
     const owner = pr.head.repo.owner.login;
     const repo = pr.head.repo.name;
     const prNumber = pr.number;
     const sha = pr.head.sha;
+
+    // repo-specific overrides
+    if (repo.toLowerCase().includes("banking") || repo.toLowerCase().includes("finance")) {
+      configPath = "shared/rules/banking.yaml";
+    } else if (repo.toLowerCase().includes("health") || repo.toLowerCase().includes("medical")) {
+      configPath = "shared/rules/healthcare.yaml";
+    }
 
     app.log.info(`Scanning PR #${prNumber} in ${owner}/${repo}`);
 
@@ -119,7 +128,7 @@ export = (app: Probot) => {
           pr_id: `${owner}-${repo}-${prNumber}`,
           diff: diff,
           files: filesWithContent,
-          config_path: ".github/guardrails.yaml",
+          config_path: configPath, // ".github/guardrails.yaml",
           is_copilot: isCopilot,
         }),
       });
@@ -136,18 +145,29 @@ export = (app: Probot) => {
           `| Type | Description | Location | Severity | Copilot? | Details |\n` +
           `|------|-------------|----------|----------|----------|---------|\n` +
           violations
-            .map((v) => {
+            .map((v: any) => {
               const type = v.type || v.issue || "ai_review";
+              const fileInfo = v.file_path ? ` in ${v.file_path}` : "";
               const desc =
-                v.description || v.explanation || "AI-detected issue";
+                (v.description || v.issue || "AI-detected issue") + fileInfo;
               const loc = v.location || "N/A";
               const sev = v.severity || "medium";
               const copilot = v.copilot_flag ? "🚨 Yes" : "No";
-              const details = v.fix
-                ? `Fix: ${v.fix}`
-                : v.reference
-                ? `Ref: ${v.reference}`
-                : "";
+
+              // Details: prioritize AI fields, fallback to explanation or reference
+              let details = "";
+              if (v.fix) {
+                details = `Fix: ${v.fix}`;
+              } else if (v.explanation) {
+                details = `Expl: ${v.explanation}`;
+              } else if (v.reference) {
+                details = `Ref: ${v.reference}`;
+              } else if (v.cwe || v.owasp) {
+                details = `${v.cwe || ""} ${v.owasp || ""}`.trim();
+              } else {
+                details = "N/A";
+              }
+
               return `| ${type} | ${desc} | ${loc} | ${sev} | ${copilot} | ${details} |`;
             })
             .join("\n");

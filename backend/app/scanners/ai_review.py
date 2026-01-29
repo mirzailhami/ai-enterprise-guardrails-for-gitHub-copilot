@@ -89,7 +89,8 @@ def review(diff: str, config: Dict) -> List[Dict]:
                             'reference': i.get('reference', 'N/A'),
                             'severity': 'medium',  # Default or from config
                             'location': 'N/A',
-                            'copilot_flag': False  # AI review is separate from Copilot flag
+                            'copilot_flag': False,  # AI review is separate from Copilot flag
+                            'file_path': 'PR diff'  # or 'N/A'
                         }
                         valid_issues.append(normalized)
 

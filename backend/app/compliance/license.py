@@ -13,9 +13,10 @@ def check_license(files: List[Dict[str, str]], config: Dict) -> List[Dict]:
             if lic in content:
                 violations.append({
                     'type': 'license',
-                    'description': f'Restricted license "{lic.upper()}" detected in {path}',
+                    'description': f'Restricted license "{lic.upper()}" detected',
                     'risk': 'Incompatible license – may violate enterprise policy',
-                    'severity': 'high'
+                    'severity': 'high',
+                    'file_path': path
                 })
 
         # Basic IP/copyright risk (simple keyword check)
@@ -26,7 +27,8 @@ def check_license(files: List[Dict[str, str]], config: Dict) -> List[Dict]:
                     'type': 'ip_risk',
                     'description': f'Potential IP/copyright notice "{kw}" in {path} without clear license',
                     'risk': 'Possible unlicensed proprietary code',
-                    'severity': 'medium'
+                    'severity': 'medium',
+                    'file_path': path
                 })
 
     return violations

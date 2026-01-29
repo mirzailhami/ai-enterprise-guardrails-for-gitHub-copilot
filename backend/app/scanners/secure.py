@@ -50,7 +50,8 @@ def scan(files: List[Dict[str, str]], config: Dict, is_copilot: bool = False) ->
                             'location': line_no,
                             'severity': rule.get('severity', 'high'),
                             'cwe': rule.get('cwe', 'N/A'),
-                            'owasp': rule.get('owasp', 'N/A')
+                            'owasp': rule.get('owasp', 'N/A'),
+                            'file_path': path
                         }
                         add_violation(base)
                 except re.error as e:
@@ -70,7 +71,8 @@ def scan(files: List[Dict[str, str]], config: Dict, is_copilot: bool = False) ->
                             'location': line_no,
                             'severity': 'high',
                             'cwe': 'CWE-95',
-                            'owasp': 'A03:2021 – Injection'
+                            'owasp': 'A03:2021 – Injection',
+                            'file_path': path
                         }
                         add_violation(base)
 
@@ -84,7 +86,8 @@ def scan(files: List[Dict[str, str]], config: Dict, is_copilot: bool = False) ->
                             'location': line_no,
                             'severity': 'high',
                             'cwe': 'CWE-502',
-                            'owasp': 'A08:2021 – Software and Data Integrity Failures'
+                            'owasp': 'A08:2021 – Software and Data Integrity Failures',
+                            'file_path': path
                         }
                         add_violation(base)
             except SyntaxError as e:

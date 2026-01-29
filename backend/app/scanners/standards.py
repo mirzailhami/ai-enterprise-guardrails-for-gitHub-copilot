@@ -24,7 +24,8 @@ def enforce(file_content: str, config: Dict) -> List[Dict]:
                         'type': 'naming',
                         'description': f"Invalid function name: {node.name} (expected {pattern})",
                         'location': node.lineno,
-                        'severity': 'medium'  # can be configurable
+                        'severity': 'medium',
+                        'file_path': 'N/A'
                     })
     except SyntaxError as e:
         print(f"Standards AST SyntaxError: {e} - skipping")
@@ -36,7 +37,8 @@ def enforce(file_content: str, config: Dict) -> List[Dict]:
         violations.append({
             'type': 'logging',
             'description': 'Missing logging import',
-            'severity': 'medium'
+            'severity': 'medium',
+            'file_path': 'N/A'
         })
     
     print(f"Standards violations found: {len(violations)}")

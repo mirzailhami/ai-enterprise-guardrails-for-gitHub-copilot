@@ -28,11 +28,19 @@ module.exports = (app) => {
     function handlePR(context, app) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
+            let configPath = ".github/guardrails.yaml"; // Default
             const pr = context.payload.pull_request;
             const owner = pr.head.repo.owner.login;
             const repo = pr.head.repo.name;
             const prNumber = pr.number;
             const sha = pr.head.sha;
+            // repo-specific overrides
+            if (repo.toLowerCase().includes("banking") || repo.toLowerCase().includes("finance")) {
+                configPath = "shared/rules/banking.yaml";
+            }
+            else if (repo.toLowerCase().includes("health") || repo.toLowerCase().includes("medical")) {
+                configPath = "shared/rules/healthcare.yaml";
+            }
             app.log.info(`Scanning PR #${prNumber} in ${owner}/${repo}`);
             try {
                 // Fetch diff
@@ -110,7 +118,7 @@ module.exports = (app) => {
                         pr_id: `${owner}-${repo}-${prNumber}`,
                         diff: diff,
                         files: filesWithContent,
-                        config_path: ".github/guardrails.yaml",
+                        config_path: configPath, // ".github/guardrails.yaml",
                         is_copilot: isCopilot,
                     }),
                 });
@@ -126,15 +134,28 @@ module.exports = (app) => {
                         violations
                             .map((v) => {
                             const type = v.type || v.issue || "ai_review";
-                            const desc = v.description || v.explanation || "AI-detected issue";
+                            const fileInfo = v.file_path ? ` in ${v.file_path}` : "";
+                            const desc = (v.description || v.issue || "AI-detected issue") + fileInfo;
                             const loc = v.location || "N/A";
                             const sev = v.severity || "medium";
                             const copilot = v.copilot_flag ? "🚨 Yes" : "No";
-                            const details = v.fix
-                                ? `Fix: ${v.fix}`
-                                : v.reference
-                                    ? `Ref: ${v.reference}`
-                                    : "";
+                            // Details: prioritize AI fields, fallback to explanation or reference
+                            let details = "";
+                            if (v.fix) {
+                                details = `Fix: ${v.fix}`;
+                            }
+                            else if (v.explanation) {
+                                details = `Expl: ${v.explanation}`;
+                            }
+                            else if (v.reference) {
+                                details = `Ref: ${v.reference}`;
+                            }
+                            else if (v.cwe || v.owasp) {
+                                details = `${v.cwe || ""} ${v.owasp || ""}`.trim();
+                            }
+                            else {
+                                details = "N/A";
+                            }
                             return `| ${type} | ${desc} | ${loc} | ${sev} | ${copilot} | ${details} |`;
                         })
                             .join("\n");
