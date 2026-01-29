@@ -144,13 +144,13 @@ module.exports = (app) => {
                             // Details: show all AI fields
                             const details = [];
                             if (v.fix)
-                                details.push(`Fix: ${v.fix}`);
+                                details.push(`**Fix:** ${v.fix}`);
                             if (v.explanation)
-                                details.push(`Expl: ${v.explanation}`);
+                                details.push(`**Expl:** ${v.explanation}`);
                             if (v.reference)
-                                details.push(`Ref: ${v.reference}`);
+                                details.push(`**Ref:** ${v.reference}`);
                             const detailsText = details.length > 0
-                                ? details.join(" | ")
+                                ? details.join("<br>")
                                 : v.cwe || v.owasp
                                     ? `${v.cwe || ""} ${v.owasp || ""}`.trim()
                                     : "N/A";
