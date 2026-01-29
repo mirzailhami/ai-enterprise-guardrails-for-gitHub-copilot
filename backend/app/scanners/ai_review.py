@@ -77,11 +77,23 @@ def review(diff: str, config: Dict) -> List[Dict]:
                         raise ValueError("Parsed root is not a list")
 
                     # Filter only valid issues
-                    valid_issues = [
-                        i for i in issues
-                        if isinstance(i, dict) and 'issue' in i and i['issue'].strip()
-                    ]
-                    print(f"AI review found {len(valid_issues)} valid issues (filtered from {len(issues)})")
+                    valid_issues = []
+                    for i in issues:
+                        if not isinstance(i, dict) or 'issue' not in i:
+                            continue
+                        normalized = {
+                            'type': 'ai_review',
+                            'description': i.get('issue', 'AI-detected issue'),
+                            'explanation': i.get('explanation', ''),
+                            'fix': i.get('fix', ''),
+                            'reference': i.get('reference', 'N/A'),
+                            'severity': 'medium',  # Default or from config
+                            'location': 'N/A',
+                            'copilot_flag': False  # AI review is separate from Copilot flag
+                        }
+                        valid_issues.append(normalized)
+
+                    print(f"AI review found {len(valid_issues)} valid normalized issues")
                     return valid_issues
                 except (json.JSONDecodeError, ValueError) as e:
                     print(f"JSON parse error: {e} - raw extracted: {json_str[:200]}...")

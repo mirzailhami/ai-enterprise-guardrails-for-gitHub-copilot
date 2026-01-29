@@ -63,7 +63,7 @@ module.exports = (app) => {
                             });
                             const content = Buffer.from(contentData.content, "base64").toString("utf-8");
                             // Skip binary-like content (contains null bytes)
-                            if (content.includes('\x00')) {
+                            if (content.includes("\x00")) {
                                 app.log.warn(`Skipping binary-like file: ${file.filename}`);
                                 continue; // or send empty content
                             }
@@ -98,7 +98,9 @@ module.exports = (app) => {
                         app.log.warn(`API response status: ${err.response.status}, data: ${JSON.stringify(err.response.data)}`);
                     }
                 }
-                const isCopilot = commitMsg.includes("copilot") || commitMsg.includes("ai-generated") || commitMsg.includes("copilot suggestion");
+                const isCopilot = commitMsg.includes("copilot") ||
+                    commitMsg.includes("ai-generated") ||
+                    commitMsg.includes("copilot suggestion");
                 app.log.info(`Copilot mode: ${isCopilot}`);
                 // POST to backend
                 const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
@@ -120,13 +122,31 @@ module.exports = (app) => {
                 const total = results.total || 0;
                 app.log.info(`Scan results: ${total} violations, policy: ${policy}`);
                 if (total > 0) {
-                    const table = `| Type | Description | Location | Severity | Copilot? |\n|------|-------------|----------|----------|----------|\n${violations
-                        .map((v) => `| ${v.type} | ${v.description} | ${v.location || "N/A"} | ${v.severity || "N/A"} | ${v.copilot_flag ? "🚨 Yes" : "No"} |`)
-                        .join("\n")}`;
-                    const body = `### Guardrails Scan: ${total} Issues 🚨\n**Policy**: ${policy.toUpperCase()}\n**Copilot Mode**: ${isCopilot ? "Enabled (Stricter Checks)" : "Off"}\n\n${table}\n\n${policy === "blocking" ? "❌ Merge blocked—fix or /override." : "⚠️ Review fixes."}`;
+                    const table = `| Type | Description | Location | Severity | Copilot? | Details |\n` +
+                        `|------|-------------|----------|----------|----------|---------|\n` +
+                        violations
+                            .map((v) => {
+                            const type = v.type || v.issue || "ai_review";
+                            const desc = v.description || v.explanation || "AI-detected issue";
+                            const loc = v.location || "N/A";
+                            const sev = v.severity || "medium";
+                            const copilot = v.copilot_flag ? "🚨 Yes" : "No";
+                            const details = v.fix
+                                ? `Fix: ${v.fix}`
+                                : v.reference
+                                    ? `Ref: ${v.reference}`
+                                    : "";
+                            return `| ${type} | ${desc} | ${loc} | ${sev} | ${copilot} | ${details} |`;
+                        })
+                            .join("\n");
+                    const body = `### Guardrails Scan: ${total} Issues 🚨\n**Policy**: ${policy.toUpperCase()}\n**Copilot Mode**: ${isCopilot ? "Enabled (Stricter Checks)" : "Off"}\n\n${table}\n\n${policy === "blocking"
+                        ? "❌ Merge blocked—fix or /override."
+                        : "⚠️ Review fixes."}`;
                     yield context.octokit.issues.createComment(context.issue({ body }));
                     const state = policy === "blocking" ? "failure" : "success";
-                    const desc = isCopilot ? `${total} violations (AI-flagged)` : `${total} violations`;
+                    const desc = isCopilot
+                        ? `${total} violations (AI-flagged)`
+                        : `${total} violations`;
                     yield context.octokit.repos.createCommitStatus({
                         owner,
                         repo,
@@ -185,7 +205,7 @@ module.exports = (app) => {
             });
             app.log.info("Status overridden to success");
             yield context.octokit.issues.createComment(context.issue({
-                body: "Override approved—proceed with caution."
+                body: "Override approved—proceed with caution.",
             }));
             app.log.info("Override reply comment posted");
         }
@@ -196,7 +216,7 @@ module.exports = (app) => {
             }
             // Still post reply even if status fails
             yield context.octokit.issues.createComment(context.issue({
-                body: "Override approved (status update failed, but proceed with caution)."
+                body: "Override approved (status update failed, but proceed with caution).",
             }));
         }
     }));

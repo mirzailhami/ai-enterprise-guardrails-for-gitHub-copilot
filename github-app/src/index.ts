@@ -50,22 +50,29 @@ export = (app: Probot) => {
       for (const file of fileList) {
         if (file.status === "added" || file.status === "modified") {
           try {
-            const { data: contentData } = await context.octokit.repos.getContent({
-              owner,
-              repo,
-              path: file.filename,
-              ref: sha,
-            });
-            const content = Buffer.from(contentData.content, "base64").toString("utf-8");
+            const { data: contentData } =
+              await context.octokit.repos.getContent({
+                owner,
+                repo,
+                path: file.filename,
+                ref: sha,
+              });
+            const content = Buffer.from(contentData.content, "base64").toString(
+              "utf-8"
+            );
             // Skip binary-like content (contains null bytes)
-            if (content.includes('\x00')) {
+            if (content.includes("\x00")) {
               app.log.warn(`Skipping binary-like file: ${file.filename}`);
-              continue;  // or send empty content
+              continue; // or send empty content
             }
             filesWithContent.push({ path: file.filename, content });
-            app.log.info(`Fetched content for ${file.filename} (${content.length} chars)`);
+            app.log.info(
+              `Fetched content for ${file.filename} (${content.length} chars)`
+            );
           } catch (err) {
-            app.log.warn(`Failed to fetch content for ${file.filename}: ${err}`);
+            app.log.warn(
+              `Failed to fetch content for ${file.filename}: ${err}`
+            );
           }
         }
       }
@@ -90,11 +97,18 @@ export = (app: Probot) => {
       } catch (err) {
         app.log.warn(`Failed to fetch commit message: ${err.message}`);
         if (err.response) {
-          app.log.warn(`API response status: ${err.response.status}, data: ${JSON.stringify(err.response.data)}`);
+          app.log.warn(
+            `API response status: ${
+              err.response.status
+            }, data: ${JSON.stringify(err.response.data)}`
+          );
         }
       }
 
-      const isCopilot = commitMsg.includes("copilot") || commitMsg.includes("ai-generated") || commitMsg.includes("copilot suggestion");
+      const isCopilot =
+        commitMsg.includes("copilot") ||
+        commitMsg.includes("ai-generated") ||
+        commitMsg.includes("copilot suggestion");
       app.log.info(`Copilot mode: ${isCopilot}`);
 
       // POST to backend
@@ -105,7 +119,7 @@ export = (app: Probot) => {
         body: JSON.stringify({
           pr_id: `${owner}-${repo}-${prNumber}`,
           diff: diff,
-          files: filesWithContent,  // Now [{path, content}]
+          files: filesWithContent, // Now [{path, content}]
           config_path: ".github/guardrails.yaml",
           is_copilot: isCopilot,
         }),
@@ -119,15 +133,39 @@ export = (app: Probot) => {
       app.log.info(`Scan results: ${total} violations, policy: ${policy}`);
 
       if (total > 0) {
-        const table = `| Type | Description | Location | Severity | Copilot? |\n|------|-------------|----------|----------|----------|\n${violations
-          .map((v) => `| ${v.type} | ${v.description} | ${v.location || "N/A"} | ${v.severity || "N/A"} | ${v.copilot_flag ? "🚨 Yes" : "No"} |`)
-          .join("\n")}`;
-        const body = `### Guardrails Scan: ${total} Issues 🚨\n**Policy**: ${policy.toUpperCase()}\n**Copilot Mode**: ${isCopilot ? "Enabled (Stricter Checks)" : "Off"}\n\n${table}\n\n${policy === "blocking" ? "❌ Merge blocked—fix or /override." : "⚠️ Review fixes."}`;
+        const table =
+          `| Type | Description | Location | Severity | Copilot? | Details |\n` +
+          `|------|-------------|----------|----------|----------|---------|\n` +
+          violations
+            .map((v) => {
+              const type = v.type || v.issue || "ai_review";
+              const desc =
+                v.description || v.explanation || "AI-detected issue";
+              const loc = v.location || "N/A";
+              const sev = v.severity || "medium";
+              const copilot = v.copilot_flag ? "🚨 Yes" : "No";
+              const details = v.fix
+                ? `Fix: ${v.fix}`
+                : v.reference
+                ? `Ref: ${v.reference}`
+                : "";
+              return `| ${type} | ${desc} | ${loc} | ${sev} | ${copilot} | ${details} |`;
+            })
+            .join("\n");
+        const body = `### Guardrails Scan: ${total} Issues 🚨\n**Policy**: ${policy.toUpperCase()}\n**Copilot Mode**: ${
+          isCopilot ? "Enabled (Stricter Checks)" : "Off"
+        }\n\n${table}\n\n${
+          policy === "blocking"
+            ? "❌ Merge blocked—fix or /override."
+            : "⚠️ Review fixes."
+        }`;
 
         await context.octokit.issues.createComment(context.issue({ body }));
 
         const state = policy === "blocking" ? "failure" : "success";
-        const desc = isCopilot ? `${total} violations (AI-flagged)` : `${total} violations`;
+        const desc = isCopilot
+          ? `${total} violations (AI-flagged)`
+          : `${total} violations`;
         await context.octokit.repos.createCommitStatus({
           owner,
           repo,
@@ -139,7 +177,9 @@ export = (app: Probot) => {
         });
         app.log.info("Status check set");
       } else {
-        await context.octokit.issues.createComment(context.issue({ body: "### Guardrails: All Clear! ✅ Merge away." }));
+        await context.octokit.issues.createComment(
+          context.issue({ body: "### Guardrails: All Clear! ✅ Merge away." })
+        );
         await context.octokit.repos.createCommitStatus({
           owner,
           repo,
@@ -152,24 +192,26 @@ export = (app: Probot) => {
       }
     } catch (error) {
       app.log.error(`Error in PR handler: ${error.message}`);
-      await context.octokit.issues.createComment(context.issue({ body: `### Guardrails Error: ${error.message}` }));
+      await context.octokit.issues.createComment(
+        context.issue({ body: `### Guardrails Error: ${error.message}` })
+      );
     }
   }
 
   app.on("issue_comment.created", async (context: any) => {
     const commentBody = context.payload.comment.body.trim();
-  
+
     if (commentBody !== "/override") {
       return;
     }
-  
+
     app.log.info("Override command received - processing!");
-  
+
     try {
       const prNumber = context.payload.issue.number;
       const owner = context.payload.repository.owner.login;
       const repo = context.payload.repository.name;
-  
+
       // Re-fetch the PR to get the current head SHA (reliable!)
       const { data: pr } = await context.octokit.pulls.get({
         owner,
@@ -178,7 +220,7 @@ export = (app: Probot) => {
       });
       const sha = pr.head.sha;
       app.log.info(`Fetched current PR head SHA: ${sha}`);
-  
+
       await context.octokit.repos.createCommitStatus({
         owner,
         repo,
@@ -188,10 +230,12 @@ export = (app: Probot) => {
         description: "Overridden ⚠️",
       });
       app.log.info("Status overridden to success");
-  
-      await context.octokit.issues.createComment(context.issue({
-        body: "Override approved—proceed with caution."
-      }));
+
+      await context.octokit.issues.createComment(
+        context.issue({
+          body: "Override approved—proceed with caution.",
+        })
+      );
       app.log.info("Override reply comment posted");
     } catch (err) {
       app.log.error(`Override failed: ${err.message}`);
@@ -199,9 +243,11 @@ export = (app: Probot) => {
         app.log.error(`API details: ${JSON.stringify(err.response.data)}`);
       }
       // Still post reply even if status fails
-      await context.octokit.issues.createComment(context.issue({
-        body: "Override approved (status update failed, but proceed with caution)."
-      }));
+      await context.octokit.issues.createComment(
+        context.issue({
+          body: "Override approved (status update failed, but proceed with caution).",
+        })
+      );
     }
   });
 };
