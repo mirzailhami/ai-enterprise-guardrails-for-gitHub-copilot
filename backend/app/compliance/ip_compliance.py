@@ -37,7 +37,7 @@ def check_ip_risk(files: List[Dict[str, str]], config: Dict) -> List[Dict]:
             })
         seen_contents[content_hash] = path
 
-        # Near-duplicate across files (optional — keep if you want)
+        # Optional: Near-duplicate across files
         for prev_path, prev_hash in seen_contents.items():
             if prev_path == path:
                 continue
@@ -50,22 +50,5 @@ def check_ip_risk(files: List[Dict[str, str]], config: Dict) -> List[Dict]:
                     'severity': 'medium',
                     'file_path': path
                 })
-
-        # Simple within-file duplicate detection (repeated blocks/lines)
-        lines = content.splitlines()
-        seen_lines = {}
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-            if stripped:
-                if stripped in seen_lines:
-                    violations.append({
-                        'type': 'duplicate_code',
-                        'description': f'Duplicate code block/line in {path} at line {i+1} (seen at line {seen_lines[stripped]})',
-                        'risk': 'Potential copied code or redundancy inside file',
-                        'severity': 'low',
-                        'file_path': path
-                    })
-                else:
-                    seen_lines[stripped] = i + 1
 
     return violations
