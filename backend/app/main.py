@@ -4,6 +4,7 @@ from .utils.audit import init_db
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Dict
+from fastapi.responses import HTMLResponse
 from .utils.config import load_guardrails
 from .utils.audit import log
 from .scanners.secure import scan as secure_scan
@@ -62,19 +63,37 @@ def get_audit(pr_id: str):
     conn.close()
     return {"audits": [dict(zip([col[0] for col in cursor.description], row)) for row in rows]}
 
-@app.get("/dashboard")
+@app.get("/dashboard", response_class=HTMLResponse)
 def dashboard():
     conn = sqlite3.connect("audit.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT pr_id, violations_count, action, resolution FROM audits ORDER BY timestamp DESC")
+    cursor.execute("SELECT pr_id, violations_count, action, resolution, timestamp FROM audits ORDER BY timestamp DESC")
     rows = cursor.fetchall()
     conn.close()
-    return {
-        "audits": [
-            {"pr_id": r[0], "violations": r[1], "action": r[2], "resolution": r[3]}
-            for r in rows
-        ]
-    }
+
+    html = """
+    <html>
+    <head><title>Guardrails Audit Dashboard</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+    </head>
+    <body>
+    <h1>Guardrails Audit Dashboard</h1>
+    <table>
+        <tr><th>PR ID</th><th>Violations</th><th>Action</th><th>Resolution</th><th>Timestamp</th></tr>
+    """
+    for row in rows:
+        html += f"<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[2]}</td><td>{row[3]}</td><td>{row[4]}</td></tr>"
+    html += """
+    </table>
+    </body>
+    </html>
+    """
+    return html
     
 @app.get("/")
 def root():

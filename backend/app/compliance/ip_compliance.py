@@ -7,8 +7,10 @@ def check_ip_risk(files: List[Dict[str, str]], config: Dict) -> List[Dict]:
     restricted_keywords = config.get('restricted_keywords', ['proprietary', 'confidential', 'copyright all rights reserved', 'all rights reserved'])
     min_similarity = 0.85  # 85% similar = potential copy
 
-    # Hash-based exact duplicate detection
+    # Track file hashes and contents for duplicate detection
     file_hashes = {}
+    file_contents = {}
+
     for file_item in files:
         path = file_item.get('path', 'unknown')
         content = file_item.get('content', '')
@@ -33,11 +35,13 @@ def check_ip_risk(files: List[Dict[str, str]], config: Dict) -> List[Dict]:
                 'severity': 'medium'
             })
         file_hashes[content_hash] = path
+        file_contents[path] = content
 
         # Near-duplicate (fuzzy similarity to previous files)
-        if len(file_hashes) > 1:
-            prev_path, prev_hash = list(file_hashes.items())[-2]
-            similarity = SequenceMatcher(None, content, prev_hash).ratio()
+        for prev_path, prev_content in file_contents.items():
+            if prev_path == path:
+                continue
+            similarity = SequenceMatcher(None, content, prev_content).ratio()
             if similarity > min_similarity:
                 violations.append({
                     'type': 'duplicate_code',

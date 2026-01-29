@@ -65,7 +65,7 @@ module.exports = (app) => {
                             // Skip binary-like content (contains null bytes)
                             if (content.includes("\x00")) {
                                 app.log.warn(`Skipping binary-like file: ${file.filename}`);
-                                continue; // or send empty content
+                                continue;
                             }
                             filesWithContent.push({ path: file.filename, content });
                             app.log.info(`Fetched content for ${file.filename} (${content.length} chars)`);
@@ -86,7 +86,6 @@ module.exports = (app) => {
                         repo,
                         ref: commitSha,
                     });
-                    // Safe access
                     commitMsg = ((_b = (_a = commitData === null || commitData === void 0 ? void 0 : commitData.commit) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.toLowerCase()) || "";
                     if (!commitMsg) {
                         app.log.warn("Commit message was empty or missing in response");
@@ -110,7 +109,7 @@ module.exports = (app) => {
                     body: JSON.stringify({
                         pr_id: `${owner}-${repo}-${prNumber}`,
                         diff: diff,
-                        files: filesWithContent, // Now [{path, content}]
+                        files: filesWithContent,
                         config_path: ".github/guardrails.yaml",
                         is_copilot: isCopilot,
                     }),
@@ -187,7 +186,6 @@ module.exports = (app) => {
             const prNumber = context.payload.issue.number;
             const owner = context.payload.repository.owner.login;
             const repo = context.payload.repository.name;
-            // Re-fetch the PR to get the current head SHA (reliable!)
             const { data: pr } = yield context.octokit.pulls.get({
                 owner,
                 repo,

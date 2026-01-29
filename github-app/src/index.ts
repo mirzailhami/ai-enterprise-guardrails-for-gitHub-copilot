@@ -63,7 +63,7 @@ export = (app: Probot) => {
             // Skip binary-like content (contains null bytes)
             if (content.includes("\x00")) {
               app.log.warn(`Skipping binary-like file: ${file.filename}`);
-              continue; // or send empty content
+              continue;
             }
             filesWithContent.push({ path: file.filename, content });
             app.log.info(
@@ -89,7 +89,6 @@ export = (app: Probot) => {
           ref: commitSha,
         });
 
-        // Safe access
         commitMsg = commitData?.commit?.message?.toLowerCase() || "";
         if (!commitMsg) {
           app.log.warn("Commit message was empty or missing in response");
@@ -119,7 +118,7 @@ export = (app: Probot) => {
         body: JSON.stringify({
           pr_id: `${owner}-${repo}-${prNumber}`,
           diff: diff,
-          files: filesWithContent, // Now [{path, content}]
+          files: filesWithContent,
           config_path: ".github/guardrails.yaml",
           is_copilot: isCopilot,
         }),
@@ -212,7 +211,6 @@ export = (app: Probot) => {
       const owner = context.payload.repository.owner.login;
       const repo = context.payload.repository.name;
 
-      // Re-fetch the PR to get the current head SHA (reliable!)
       const { data: pr } = await context.octokit.pulls.get({
         owner,
         repo,
