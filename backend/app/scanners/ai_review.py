@@ -4,6 +4,12 @@ import os
 import re
 from typing import List, Dict
 
+# Install once: pip install json-repair
+try:
+    from json_repair import repair_json
+except ImportError:
+    repair_json = None  # fallback if not installed
+
 HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions"
 HF_MODEL = "meta-llama/Llama-3.2-3B-Instruct"
 
@@ -49,7 +55,7 @@ def review(diff: str, config: Dict) -> List[Dict]:
 
     try:
         print(f"Calling HF router with model: {HF_MODEL}")
-        response = requests.post(HF_ROUTER_URL, headers=headers, json=payload, timeout=90)  # Longer timeout
+        response = requests.post(HF_ROUTER_URL, headers=headers, json=payload, timeout=120)
         response.raise_for_status()
         result = response.json()
 
@@ -60,44 +66,55 @@ def review(diff: str, config: Dict) -> List[Dict]:
             # Clean markdown fences
             cleaned_text = re.sub(r'^```json\s*|\s*```$', '', raw_text, flags=re.IGNORECASE | re.MULTILINE).strip()
 
-            # More forgiving match: find any [ ... ] block
-            match = re.search(r'\[.*?(?=\]|\Z)', cleaned_text, re.DOTALL | re.MULTILINE)
-            if match:
-                json_str = match.group(0)
-                # Auto-close if truncated
-                if not json_str.strip().endswith(']'):
-                    json_str += ']}'  # close last object and array
-                print(f"Extracted & auto-closed JSON preview: {json_str[:300]}...")
+            print(f"Cleaned AI response length: {len(cleaned_text)} chars")
+            print(f"Cleaned AI response preview: {cleaned_text[:500]}...")
 
-                try:
-                    issues = json.loads(json_str)
-                    if not isinstance(issues, list):
-                        raise ValueError("Root is not a list")
+            # Very forgiving: grab everything from first [ to last ]
+            match = re.search(r'\[.*\]', cleaned_text, re.DOTALL)
+            json_str = match.group(0) if match else cleaned_text
 
-                    valid_issues = []
-                    for i in issues:
-                        if not isinstance(i, dict) or 'issue' not in i:
-                            continue
-                        normalized = {
-                            'type': 'ai_review',
-                            'description': i.get('issue', 'AI-detected issue'),
-                            'explanation': i.get('explanation', ''),
-                            'fix': i.get('fix', ''),
-                            'reference': i.get('reference', 'N/A'),
-                            'severity': 'medium',
-                            'location': 'N/A',
-                            'copilot_flag': False,
-                            'file_path': 'PR diff'
-                        }
-                        valid_issues.append(normalized)
+            # Trim trailing junk after last ]
+            json_str = re.sub(r'\].*', ']', json_str).strip()
 
-                    print(f"AI review found {len(valid_issues)} valid normalized issues")
-                    return valid_issues
-                except (json.JSONDecodeError, ValueError) as e:
-                    print(f"JSON parse error: {e} - raw extracted: {json_str[:500]}...")
+            print(f"Trimmed & cleaned JSON preview: {json_str[:300]}...")
+
+            try:
+                issues = json.loads(json_str)
+            except json.JSONDecodeError as e:
+                print(f"JSON parse error: {e}")
+                if repair_json:
+                    try:
+                        repaired = repair_json(json_str)
+                        issues = json.loads(repaired)
+                        print("JSON repaired successfully using json_repair")
+                    except Exception as repair_e:
+                        print(f"Repair failed: {repair_e}")
+                        issues = []
+                else:
+                    issues = []
+
+            if isinstance(issues, list):
+                valid_issues = []
+                for i in issues:
+                    if not isinstance(i, dict) or 'issue' not in i:
+                        continue
+                    normalized = {
+                        'type': 'ai_review',
+                        'description': i.get('issue', 'AI-detected issue'),
+                        'explanation': i.get('explanation', ''),
+                        'fix': i.get('fix', ''),
+                        'reference': i.get('reference', 'N/A'),
+                        'severity': 'medium',
+                        'location': 'N/A',
+                        'copilot_flag': False,
+                        'file_path': 'PR diff'
+                    }
+                    valid_issues.append(normalized)
+
+                print(f"AI review found {len(valid_issues)} valid normalized issues")
+                return valid_issues
             else:
-                print("No array-like structure found in cleaned response - full cleaned preview:")
-                print(cleaned_text[:800] + "..." if len(cleaned_text) > 800 else cleaned_text)
+                print("Parsed result is not a list")
 
         else:
             print("Unexpected response format from HF router")
@@ -110,6 +127,7 @@ def review(diff: str, config: Dict) -> List[Dict]:
     except Exception as e:
         print(f"AI review failed: {e}")
 
+    # Fallback (comment out after success)
     print("AI review failed - using fallback test issues")
     return [
         {
