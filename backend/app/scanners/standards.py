@@ -2,11 +2,11 @@ import ast
 import re
 from typing import List, Dict
 
-def enforce(file_content: str, config: Dict) -> List[Dict]:
+def enforce(file_content: str, file_path: str, config: Dict) -> List[Dict]:
     violations = []
     standards = config.get('standards', {})
     
-    print(f"Applying standards rules from config: {standards}")
+    print(f"Applying standards rules from config: {standards} for file: {file_path}")
     
     if '\x00' in file_content:
         print("Skipping standards AST: null bytes detected (likely binary)")
@@ -25,20 +25,20 @@ def enforce(file_content: str, config: Dict) -> List[Dict]:
                         'description': f"Invalid function name: {node.name} (expected {pattern})",
                         'location': node.lineno,
                         'severity': 'medium',
-                        'file_path': 'N/A'
+                        'file_path': file_path
                     })
     except SyntaxError as e:
         print(f"Standards AST SyntaxError: {e} - skipping")
         pass
     
-    # Logging check (only on Python files or if content looks like code)
+    # Logging check — only on Python files
     if file_path.lower().endswith('.py') and 'import logging' not in file_content and standards.get('logging', {}).get('require'):
         print("Logging missing detected in Python file")
         violations.append({
             'type': 'logging',
             'description': 'Missing logging import',
             'severity': 'medium',
-            'file_path': 'N/A'
+            'file_path': file_path
         })
     
     print(f"Standards violations found: {len(violations)}")

@@ -36,7 +36,7 @@ async def scan_pr(req: ScanRequest):
         content = file_item.get('content', '')
         path = file_item.get('path', 'unknown')
         if content:
-            violations += enforce(content, config)
+            violations += enforce(content, path, config)
             print(f"Scanned {path} - {len(content)} chars")  # Debug
 
     # AI (unchanged)
