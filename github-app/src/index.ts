@@ -28,9 +28,15 @@ export = (app: Probot) => {
     const sha = pr.head.sha;
 
     // repo-specific overrides
-    if (repo.toLowerCase().includes("banking") || repo.toLowerCase().includes("finance")) {
+    if (
+      repo.toLowerCase().includes("banking") ||
+      repo.toLowerCase().includes("finance")
+    ) {
       configPath = "shared/rules/banking.yaml";
-    } else if (repo.toLowerCase().includes("health") || repo.toLowerCase().includes("medical")) {
+    } else if (
+      repo.toLowerCase().includes("health") ||
+      repo.toLowerCase().includes("medical")
+    ) {
       configPath = "shared/rules/healthcare.yaml";
     }
 
@@ -147,14 +153,19 @@ export = (app: Probot) => {
           violations
             .map((v: any) => {
               const type = v.type || v.issue || "ai_review";
-              const fileInfo = v.file_path ? ` in ${v.file_path}` : "";
+              const fileInfo =
+                v.file_path &&
+                v.file_path !== "N/A" &&
+                v.file_path !== "PR diff"
+                  ? ` in ${v.file_path}`
+                  : "";
               const desc =
                 (v.description || v.issue || "AI-detected issue") + fileInfo;
               const loc = v.location || "N/A";
               const sev = v.severity || "medium";
               const copilot = v.copilot_flag ? "🚨 Yes" : "No";
 
-              // Details: prioritize AI fields, fallback to explanation or reference
+              // Details: prioritize AI, fallback for static
               let details = "";
               if (v.fix) {
                 details = `Fix: ${v.fix}`;
