@@ -1,5 +1,4 @@
 # AI-Powered Enterprise Guardrails for GitHub Copilot
-[Topcoder Challenge Submission](https://www.topcoder.com/challenges/54a459e5-ddc4-4e56-8fe9-09e0b5506e95?tab=details)
 
 This MVP provides enterprise-grade guardrails for GitHub Copilot, ensuring secure, compliant, and high-quality code in production workflows. It scans both AI-generated and human-written code in PRs, detects risks (security, standards, licensing, IP), flags Copilot-specific issues, enforces customizable policies, provides AI-assisted explanations and fixes, and logs audits — all while staying developer-friendly and scalable.
 
@@ -29,8 +28,8 @@ https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/
 - 38 violations detected (secure + standards + license/IP + AI)
 - Copilot Mode: Enabled (from commit message keyword)
 - Blocking policy enforced — red status check ("Merge blocked")
-- Override tested — /override comment → green status + reply: "Override approved—proceed with caution."
-- Table with filename in Description (e.g., "Insecure deserialization with pickle.loads in backend/test.py"), AI fixes in Details
+- Override tested — `/override` comment → green status + reply: "Override approved—proceed with caution."
+- Table with filename in Description (e.g., "Insecure deserialization with pickle.loads in `backend/test.py`"), AI fixes in Details
 
 ### Architecture Diagram
 ```
@@ -78,34 +77,52 @@ flowchart TD
 ### Quick Start (Local Deployment Guide)
 
 1. Backend (Python/FastAPI)
-   cd backend
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   python run.py
-   → Runs on http://localhost:8000 (Swagger: /docs)
+   - `cd backend`
+   - `python -m venv .venv`
+   - `source .venv/bin/activate`
+   - `pip install -r requirements.txt`
+   - `python run.py`
+   - → Runs on http://localhost:8000 (Swagger: /docs)
 
 2. Probot GitHub App (TypeScript)
-   cd github-app
-   npm install
-   npm run build
-   npm start
-   → Runs on http://localhost:3000
+   - `cd github-app`
+   - `npm install`
+   - `npm run build`
+   - `npm start`
+   - → Runs on http://localhost:3000
+
+**Create and configure .env file in github-app/**
+
+Create a file named `.env` in the `github-app/` folder with the following content (replace placeholders with your actual values):
+
+```
+APP_ID=your_github_app_id
+PRIVATE_KEY_PATH=./private-key.pem
+WEBHOOK_SECRET=your_webhook_secret
+GITHUB_TOKEN=your_personal_access_token
+BACKEND_URL=http://localhost:8000
+```
+How to obtain these values:
+- **APP_ID**: From GitHub → Settings → Developer settings → GitHub Apps → your app → App ID
+- **PRIVATE_KEY_PATH**: Path to your app's private key PEM file (download from GitHub App settings → Generate a private key)
+- **WEBHOOK_SECRET**: Set when creating the GitHub App (or generate one and update in GitHub App settings)
+- **GITHUB_TOKEN**: Personal Access Token (classic) with repo scope (from GitHub → Settings → Developer settings → Personal access tokens)
+- **BACKEND_URL**: Use [http://localhost:8000](http://localhost:8000) locally or your ngrok URL for public webhook
 
 3. Expose webhook publicly (use ngrok)
-   ngrok http 3000
-   → Copy HTTPS URL (e.g. https://abc123.ngrok-free.app)
+   - `ngrok http 3000`
+   - → Copy HTTPS URL (e.g. [https://abc123.ngrok-free.app](https://abc123.ngrok-free.app))
 
 4. Update GitHub App
-   Go to https://github.com/settings/apps/ai-enterprise-guardrails
-   Edit → Webhook URL: paste ngrok HTTPS → Save
+   - Go to [https://github.com/settings/apps/ai-enterprise-guardrails](https://github.com/settings/apps/ai-enterprise-guardrails)
+   - Edit → Webhook URL: paste ngrok HTTPS → Save
 
 5. Install app on your repo
-   App page → Install App → Select ai-enterprise-guardrails-for-gitHub-copilot
-   Open a PR → Auto-scan + comment + status!
+   - App page → Install App → Select `ai-enterprise-guardrails-for-gitHub-copilot`
+   - Open a PR → Auto-scan + comment + status!
 
 ### Configuration
-All rules/policies loaded from shared/configs/guardrails.yaml:
+All rules/policies loaded from `shared/configs/guardrails.yaml`:
 ```
 enforcement: blocking           # advisory / warning / blocking
 standards:
@@ -118,16 +135,16 @@ restricted_licenses: [gpl-3.0, agpl-3.0]
 ```
 
 ### Bonus Features
-- Visual Audit Dashboard: http://localhost:8000/dashboard (HTML summary of audits)
-- Audit Export: sqlite3 audit.db ".mode csv" ".headers on" "SELECT * FROM audits;" > audit_export.csv
-- Per-repo rule packs: Use config_path (e.g., shared/rules/banking.yaml) for specialized projects
+- Visual Audit Dashboard: [http://localhost:8000/dashboard](http://localhost:8000/dashboard) (HTML summary of audits)
+- Audit Export: `sqlite3 audit.db ".mode csv" ".headers on" "SELECT * FROM audits;"` > audit_export.csv
+- Per-repo rule packs: Use config_path (e.g., `shared/rules/banking.yaml`) for specialized projects
 
 ### Submission Details
-- Source Code: https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot
+- Source Code: [https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot](https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot)
 - Deployed URLs:
-  - Backend: http://localhost:8000/docs (Swagger UI)
-  - Probot webhook: https://4a0b241fab57.ngrok-free.app (ngrok tunnel)
-- Demo PR: https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/3
+  - Backend: [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
+  - Probot webhook: [http://localhost:8000/docs](https://4a0b241fab57.ngrok-free.app) (ngrok tunnel)
+- Demo PR: [https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/3](https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/pull/3)
   - Shows real scan, table comment with filenames, Copilot flagging, blocking status, override success
 - Screenshots (in docs/ folder):
   - PR comment with violation table
