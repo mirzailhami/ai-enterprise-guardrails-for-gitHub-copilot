@@ -200,7 +200,7 @@ restricted_licenses: [gpl-3.0, agpl-3.0]
 - Check http://localhost:8000/docs → Swagger UI for /scan endpoint
 - View dashboard: http://localhost:8000/dashboard
 
-## Deployed URLs (Live on Render)
+## Deployed URLs
 - Backend Swagger: https://ai-enterprise-guardrails-for-github.onrender.com/docs
 - Audit Dashboard: https://ai-enterprise-guardrails-for-github.onrender.com/dashboard
 - Probot Webhook: https://guardrails-probot.onrender.com
