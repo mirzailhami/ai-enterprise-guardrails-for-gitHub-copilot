@@ -9,6 +9,10 @@
 
 **MVP / Proof-of-Concept** — A functional prototype demonstrating enterprise-grade protection for GitHub Copilot workflows.
 
+<a href="https://github.com/apps/copilot-shield/installations/new">
+  <img src="https://img.shields.io/badge/Install%20the%20App-blue?style=for-the-badge&logo=github&logoColor=white" alt="Install App">
+</a>
+
 [![GitHub stars](https://img.shields.io/github/stars/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot?style=flat-square&logo=github)](https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot?style=flat-square&logo=github)](https://github.com/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot/network/members)
 [![License](https://img.shields.io/github/license/mirzailhami/ai-enterprise-guardrails-for-gitHub-copilot?style=flat-square)](LICENSE)
@@ -37,6 +41,7 @@
 - [Bonus Features](#bonus-features)
 - [Verification](#verification)
 - [Deployed URLs](#deployed-urls)
+- [Using on Other Repos](#using-on-other-repos)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -133,7 +138,7 @@ How to obtain these values:
 ### Create & Configure GitHub App
 - Go to GitHub → Settings → Developer settings → GitHub Apps → New GitHub App
 - Fill in the form:
-  - GitHub App name: e.g., "AI Enterprise Guardrails"
+  - GitHub App name: e.g., "Copilot Shield"
   - Homepage URL: your repo URL
   - Callback URL: (optional, leave blank for webhook-only)
   - Webhook → Active: check the box
@@ -164,7 +169,7 @@ ngrok http 3000
 → Copy HTTPS URL (e.g. https://abc123.ngrok-free.app)
 
 **Update GitHub App**
-- Go to https://github.com/settings/apps/ai-enterprise-guardrails
+- Go to your app settings (eq. https://github.com/settings/apps/copilot-shield)
 - Edit → Webhook URL: paste ngrok HTTPS → Save
 
 ## Install & Test
@@ -206,6 +211,33 @@ restricted_licenses: [gpl-3.0, agpl-3.0]
 - Probot Webhook: https://guardrails-probot.onrender.com
 
 > Free tier services may sleep after inactivity — first request can take 10–60 seconds.
+
+## Using on Other Repos
+
+The GitHub App is now **publicly installable** — anyone can add it to their repositories. Your public backend will then automatically scan their PRs and commits.
+
+### How to Install
+
+1. Use this direct install link:  
+   https://github.com/apps/copilot-shield/installations/new
+2. Log in to GitHub (if not already)
+3. Choose your account or organization
+4. Select which repositories to enable (or "All repositories")
+5. Click **Install**
+
+Once installed:
+- The bot scans every PR (opened/reopened/synchronize) and push event
+- You’ll see violation tables, Copilot flags (🚨), status checks, and more
+- Customize per-repo rules by adding `.github/guardrails.yaml` in your repo root
+
+Example `.github/guardrails.yaml`:
+```
+enforcement: warning  # advisory / warning / blocking
+standards:
+  naming:
+    functions: "^[a-zA-Z][a-zA-Z0-9_]*$"  # allow camelCase
+```
+- Or use industry packs: push `shared/rules/banking.yaml` to the repo and set `config_path`
 
 ## Contributing
 - Contributions welcome! Fork → branch → PR.
