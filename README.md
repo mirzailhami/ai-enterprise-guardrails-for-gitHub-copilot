@@ -214,7 +214,7 @@ restricted_licenses: [gpl-3.0, agpl-3.0]
 
 ## Using on Other Repos
 
-The GitHub App is now **publicly installable** — anyone can add it to their repositories. Your public backend will then automatically scan their PRs and commits.
+The GitHub App is now **publicly installable** — anyone can add it to their repositories. App will then automatically scan their PRs and commits.
 
 ### How to Install
 
