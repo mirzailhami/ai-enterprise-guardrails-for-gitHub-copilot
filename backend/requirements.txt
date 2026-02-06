@@ -1,10 +1,6 @@
 fastapi==0.104.1
 uvicorn==0.24.0
 pyyaml==6.0.1
-semgrep
-bandit==1.7.5
-# scancode-toolkit
 requests==2.31.0
 detect-secrets
 python-dotenv
-json-repair
