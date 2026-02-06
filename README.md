@@ -136,6 +136,7 @@ How to obtain these values:
   - Homepage URL: your repo URL
   - Callback URL: (optional, leave blank for webhook-only)
   - Webhook → Active: check the box
+  - Webhook secret: generate or set one (copy to .env as WEBHOOK_SECRET)
   - Permissions: see section below
   - Events: see section below
   - Where can this app be installed: Only on this account or Any account
