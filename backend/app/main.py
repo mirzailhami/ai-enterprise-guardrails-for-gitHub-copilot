@@ -1,10 +1,11 @@
 import os
 import sqlite3
 from .utils.audit import init_db
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, Depends
 from pydantic import BaseModel
 from typing import List, Dict
 from fastapi.responses import HTMLResponse
+from fastapi.security import APIKeyHeader
 from .utils.config import load_guardrails
 from .utils.audit import log
 from .scanners.secure import scan as secure_scan
@@ -15,6 +16,8 @@ from .compliance.ip_compliance import check_ip_risk
 
 app = FastAPI(title="Guardrails Backend")
 init_db()
+API_KEY = os.getenv("SCAN_API_KEY") 
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 class ScanRequest(BaseModel):
     pr_id: str
@@ -23,8 +26,13 @@ class ScanRequest(BaseModel):
     config_path: str = None
     is_copilot: bool = False
 
+async def verify_api_key(api_key: str = Depends(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    return api_key
+
 @app.post("/scan")
-async def scan_pr(req: ScanRequest):
+async def scan_pr(req: ScanRequest, api_key: str = Depends(verify_api_key)):
     config = load_guardrails(req.config_path)
     violations: List[Dict] = []
 

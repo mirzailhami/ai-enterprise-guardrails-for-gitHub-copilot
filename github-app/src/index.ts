@@ -129,7 +129,10 @@ export = (app: Probot) => {
       const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
       const res = await fetch(`${backendUrl}/scan`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": process.env.BACKEND_API_KEY || "",
+        },
         body: JSON.stringify({
           pr_id: `${owner}-${repo}-${prNumber}`,
           diff: diff,
