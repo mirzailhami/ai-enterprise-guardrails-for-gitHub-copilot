@@ -100,7 +100,7 @@ The system separates concerns cleanly:
 - ngrok (for local webhook testing)
 - Hugging Face token (using model: `meta-llama/Llama-3.2-3B-Instruct` or any other model)
 
-### Backend Setup (FastAPI)
+### Backend Setup
 ```bash
 cd backend
 python -m venv .venv
@@ -230,7 +230,7 @@ Once installed:
 - You’ll see violation tables, Copilot flags (🚨), status checks, and more
 - Customize per-repo rules by adding `.github/guardrails.yaml` in your repo root
 
-Example `.github/guardrails.yaml`:
+**Example `.github/guardrails.yaml` (override defaults):**
 ```
 enforcement: warning  # advisory / warning / blocking
 standards:
@@ -238,6 +238,11 @@ standards:
     functions: "^[a-zA-Z][a-zA-Z0-9_]*$"  # allow camelCase
 ```
 - Or use industry packs: push `shared/rules/banking.yaml` to the repo and set `config_path`
+
+### Real-World Example: Scanning a Different Repo
+
+- Installed on [ai-crowdsourcing-onboarding repo](https://github.com/mirzailhami/ai-crowdsourcing-onboarding)
+- Copilot generated a LICENSE file with extra whitespace → bot flagged it instantly: [CopilotShield comment on license whitespace](https://github.com/mirzailhami/ai-crowdsourcing-onboarding/pull/1#issuecomment-3910894851)
 
 ## Contributing
 - Contributions welcome! Fork → branch → PR.
