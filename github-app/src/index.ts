@@ -151,6 +151,8 @@ export = (app: Probot) => {
 
       // POST to backend
       const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
+      app.log.info(`Sending to backend: ${backendUrl}/scan`);
+      app.log.info(`API Key present: ${!!process.env.BACKEND_API_KEY}`);
       const res = await fetch(`${backendUrl}/scan`, {
         method: "POST",
         headers: {
