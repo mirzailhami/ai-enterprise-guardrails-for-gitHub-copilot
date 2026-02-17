@@ -120,7 +120,7 @@ module.exports = (app) => {
                 // Check if branch name has copilot/ prefix
                 const branchName = ((_h = (_g = pr.head) === null || _g === void 0 ? void 0 : _g.ref) === null || _h === void 0 ? void 0 : _h.toLowerCase()) || "";
                 const branchIsCopilot = branchName.startsWith("copilot/");
-                // Check if PR body contains Copilot agent tips
+                // Check if PR body contains Copilot coding agent reference
                 const prBody = ((_j = pr.body) === null || _j === void 0 ? void 0 : _j.toLowerCase()) || "";
                 const bodyHasCopilot = prBody.includes("copilot coding agent");
                 const isCopilot = commitMsgHasCopilot ||

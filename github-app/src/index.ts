@@ -137,7 +137,7 @@ export = (app: Probot) => {
       const branchName = pr.head?.ref?.toLowerCase() || "";
       const branchIsCopilot = branchName.startsWith("copilot/");
 
-      // Check if PR body contains Copilot agent tips
+      // Check if PR body contains Copilot coding agent reference
       const prBody = pr.body?.toLowerCase() || "";
       const bodyHasCopilot = prBody.includes("copilot coding agent");
 
