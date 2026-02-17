@@ -126,8 +126,9 @@ export = (app: Probot) => {
         commitMsg.includes("copilot suggestion");
 
       // Check PR author login and type for Copilot-related accounts
-      const authorLogin = pr.user?.login?.toLowerCase() || "";
-      const authorType = pr.user?.type?.toLowerCase() || "";
+      const prUser = pr.user || {};
+      const authorLogin = prUser.login?.toLowerCase() || "";
+      const authorType = prUser.type?.toLowerCase() || "";
       const authorIsCopilot =
         authorLogin === "copilot" ||
         authorLogin === "copilot-swe-agent" ||

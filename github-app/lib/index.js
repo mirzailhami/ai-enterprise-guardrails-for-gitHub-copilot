@@ -27,7 +27,7 @@ module.exports = (app) => {
     }));
     function handlePR(context, app) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+            var _a, _b, _c, _d, _e, _f, _g;
             let configPath = ".github/guardrails.yaml"; // Default
             const pr = context.payload.pull_request;
             const owner = pr.head.repo.owner.login;
@@ -112,16 +112,17 @@ module.exports = (app) => {
                     commitMsg.includes("ai-generated") ||
                     commitMsg.includes("copilot suggestion");
                 // Check PR author login and type for Copilot-related accounts
-                const authorLogin = ((_d = (_c = pr.user) === null || _c === void 0 ? void 0 : _c.login) === null || _d === void 0 ? void 0 : _d.toLowerCase()) || "";
-                const authorType = ((_f = (_e = pr.user) === null || _e === void 0 ? void 0 : _e.type) === null || _f === void 0 ? void 0 : _f.toLowerCase()) || "";
+                const prUser = pr.user || {};
+                const authorLogin = ((_c = prUser.login) === null || _c === void 0 ? void 0 : _c.toLowerCase()) || "";
+                const authorType = ((_d = prUser.type) === null || _d === void 0 ? void 0 : _d.toLowerCase()) || "";
                 const authorIsCopilot = authorLogin === "copilot" ||
                     authorLogin === "copilot-swe-agent" ||
                     (authorType === "bot" && authorLogin.includes("copilot"));
                 // Check if branch name has copilot/ prefix
-                const branchName = ((_h = (_g = pr.head) === null || _g === void 0 ? void 0 : _g.ref) === null || _h === void 0 ? void 0 : _h.toLowerCase()) || "";
+                const branchName = ((_f = (_e = pr.head) === null || _e === void 0 ? void 0 : _e.ref) === null || _f === void 0 ? void 0 : _f.toLowerCase()) || "";
                 const branchIsCopilot = branchName.startsWith("copilot/");
                 // Check if PR body contains Copilot coding agent reference
-                const prBody = ((_j = pr.body) === null || _j === void 0 ? void 0 : _j.toLowerCase()) || "";
+                const prBody = ((_g = pr.body) === null || _g === void 0 ? void 0 : _g.toLowerCase()) || "";
                 const bodyHasCopilot = prBody.includes("copilot coding agent");
                 const isCopilot = commitMsgHasCopilot ||
                     authorIsCopilot ||
