@@ -131,7 +131,7 @@ export = (app: Probot) => {
       const authorIsCopilot =
         authorLogin === "copilot" ||
         authorLogin === "copilot-swe-agent" ||
-        (authorLogin.includes("copilot") && authorType === "bot");
+        (authorType === "bot" && authorLogin.includes("copilot"));
 
       // Check if branch name has copilot/ prefix
       const branchName = pr.head?.ref?.toLowerCase() || "";

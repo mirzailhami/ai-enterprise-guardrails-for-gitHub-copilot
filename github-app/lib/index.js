@@ -116,7 +116,7 @@ module.exports = (app) => {
                 const authorType = ((_f = (_e = pr.user) === null || _e === void 0 ? void 0 : _e.type) === null || _f === void 0 ? void 0 : _f.toLowerCase()) || "";
                 const authorIsCopilot = authorLogin === "copilot" ||
                     authorLogin === "copilot-swe-agent" ||
-                    (authorLogin.includes("copilot") && authorType === "bot");
+                    (authorType === "bot" && authorLogin.includes("copilot"));
                 // Check if branch name has copilot/ prefix
                 const branchName = ((_h = (_g = pr.head) === null || _g === void 0 ? void 0 : _g.ref) === null || _h === void 0 ? void 0 : _h.toLowerCase()) || "";
                 const branchIsCopilot = branchName.startsWith("copilot/");
