@@ -27,7 +27,7 @@ module.exports = (app) => {
     }));
     function handlePR(context, app) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
+            var _a, _b, _c, _d, _e, _f, _g;
             let configPath = ".github/guardrails.yaml"; // Default
             const pr = context.payload.pull_request;
             const owner = pr.head.repo.owner.login;
@@ -107,15 +107,36 @@ module.exports = (app) => {
                         app.log.warn(`API response status: ${err.response.status}, data: ${JSON.stringify(err.response.data)}`);
                     }
                 }
-                const isCopilot = commitMsg.includes("copilot") ||
+                // Copilot detection: check commit message, PR author, branch name, and PR body
+                const commitMsgHasCopilot = commitMsg.includes("copilot") ||
                     commitMsg.includes("ai-generated") ||
                     commitMsg.includes("copilot suggestion");
+                // Check PR author login and type for Copilot-related accounts
+                const prUser = pr.user || {};
+                const authorLogin = ((_c = prUser.login) === null || _c === void 0 ? void 0 : _c.toLowerCase()) || "";
+                const authorType = ((_d = prUser.type) === null || _d === void 0 ? void 0 : _d.toLowerCase()) || "";
+                const authorIsCopilot = authorLogin === "copilot" ||
+                    authorLogin === "copilot-swe-agent" ||
+                    (authorType === "bot" && authorLogin.includes("copilot"));
+                // Check if branch name has copilot/ prefix
+                const branchName = ((_f = (_e = pr.head) === null || _e === void 0 ? void 0 : _e.ref) === null || _f === void 0 ? void 0 : _f.toLowerCase()) || "";
+                const branchIsCopilot = branchName.startsWith("copilot/");
+                // Check if PR body contains Copilot coding agent reference
+                const prBody = ((_g = pr.body) === null || _g === void 0 ? void 0 : _g.toLowerCase()) || "";
+                const bodyHasCopilot = prBody.includes("copilot coding agent");
+                const isCopilot = commitMsgHasCopilot ||
+                    authorIsCopilot ||
+                    branchIsCopilot ||
+                    bodyHasCopilot;
                 app.log.info(`Copilot mode: ${isCopilot}`);
                 // POST to backend
                 const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
                 const res = yield (0, node_fetch_1.default)(`${backendUrl}/scan`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-API-Key": process.env.BACKEND_API_KEY || "",
+                    },
                     body: JSON.stringify({
                         pr_id: `${owner}-${repo}-${prNumber}`,
                         diff: diff,

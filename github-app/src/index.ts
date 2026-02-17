@@ -119,10 +119,34 @@ export = (app: Probot) => {
         }
       }
 
-      const isCopilot =
+      // Copilot detection: check commit message, PR author, branch name, and PR body
+      const commitMsgHasCopilot =
         commitMsg.includes("copilot") ||
         commitMsg.includes("ai-generated") ||
         commitMsg.includes("copilot suggestion");
+
+      // Check PR author login and type for Copilot-related accounts
+      const prUser = pr.user || {};
+      const authorLogin = prUser.login?.toLowerCase() || "";
+      const authorType = prUser.type?.toLowerCase() || "";
+      const authorIsCopilot =
+        authorLogin === "copilot" ||
+        authorLogin === "copilot-swe-agent" ||
+        (authorType === "bot" && authorLogin.includes("copilot"));
+
+      // Check if branch name has copilot/ prefix
+      const branchName = pr.head?.ref?.toLowerCase() || "";
+      const branchIsCopilot = branchName.startsWith("copilot/");
+
+      // Check if PR body contains Copilot coding agent reference
+      const prBody = pr.body?.toLowerCase() || "";
+      const bodyHasCopilot = prBody.includes("copilot coding agent");
+
+      const isCopilot =
+        commitMsgHasCopilot ||
+        authorIsCopilot ||
+        branchIsCopilot ||
+        bodyHasCopilot;
       app.log.info(`Copilot mode: ${isCopilot}`);
 
       // POST to backend
