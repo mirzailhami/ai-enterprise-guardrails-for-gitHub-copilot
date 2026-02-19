@@ -77,6 +77,12 @@ module.exports = (app) => {
                                 app.log.warn(`Skipping binary-like file: ${file.filename}`);
                                 continue;
                             }
+                            // Skip files containing data: URIs (e.g. embedded base64 images) to
+                            // prevent WAF blocks when the payload is forwarded to the backend.
+                            if (content.includes("data:")) {
+                                app.log.warn(`Skipping file with data: URI content (WAF safe-guard): ${file.filename}`);
+                                continue;
+                            }
                             filesWithContent.push({ path: file.filename, content });
                             app.log.info(`Fetched content for ${file.filename} (${content.length} chars)`);
                         }
@@ -131,10 +137,14 @@ module.exports = (app) => {
                 app.log.info(`Copilot mode: ${isCopilot}`);
                 // POST to backend
                 const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
+                app.log.info(`Sending to backend: ${backendUrl}/scan`);
+                app.log.info(`API Key present: ${!!process.env.BACKEND_API_KEY}`);
                 const res = yield (0, node_fetch_1.default)(`${backendUrl}/scan`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "User-Agent": "guardrails-probot/1.0",
                         "X-API-Key": process.env.BACKEND_API_KEY || "",
                     },
                     body: JSON.stringify({
@@ -146,6 +156,13 @@ module.exports = (app) => {
                     }),
                 });
                 app.log.info(`Backend response status: ${res.status}`);
+                if (!res.ok) {
+                    const text = yield res.text();
+                    app.log.warn(`Backend error body: ${text}`);
+                    // Do not throw – log and continue so the error handler can post a
+                    // comment without leaking the raw response body to callers.
+                    return;
+                }
                 const results = yield res.json();
                 const violations = results.violations || [];
                 const policy = results.policy || "warning";

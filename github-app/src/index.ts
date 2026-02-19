@@ -80,6 +80,15 @@ export = (app: Probot) => {
               app.log.warn(`Skipping binary-like file: ${file.filename}`);
               continue;
             }
+            // Skip files containing data: URIs (e.g. embedded base64 images) to
+            // prevent WAF blocks when the payload is forwarded to the backend.
+            // Matches patterns like: data:image/png;base64,... or data:text/plain;base64,...
+            if (/data:[a-zA-Z0-9][^;,\s]{0,50};base64,/.test(content)) {
+              app.log.warn(
+                `Skipping file with data: URI content (WAF safe-guard): ${file.filename}`
+              );
+              continue;
+            }
             filesWithContent.push({ path: file.filename, content });
             app.log.info(
               `Fetched content for ${file.filename} (${content.length} chars)`
@@ -174,7 +183,10 @@ export = (app: Probot) => {
       if (!res.ok) {
         const text = await res.text();
         app.log.warn(`Backend error body: ${text}`);
-        throw new Error(`Backend ${res.status}: ${text}`);
+        // Throw a sanitized error (without the raw backend body) so the outer
+        // catch handler can post a PR comment, while keeping sensitive payload
+        // details out of the error message propagated to callers.
+        throw new Error(`Backend scan failed with status ${res.status}`);
       }
       const results = await res.json();
 
