@@ -153,6 +153,7 @@ export = (app: Probot) => {
       const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
       app.log.info(`Sending to backend: ${backendUrl}/scan`);
       app.log.info(`API Key present: ${!!process.env.BACKEND_API_KEY}`);
+
       const res = await fetch(`${backendUrl}/scan`, {
         method: "POST",
         headers: {
@@ -171,6 +172,15 @@ export = (app: Probot) => {
       if (!res.ok) {
         const text = await res.text();
         app.log.warn(`Backend error body: ${text}`);
+        app.log.warn(
+          `Backend res body: ${JSON.stringify({
+            pr_id: `${owner}-${repo}-${prNumber}`,
+            diff: diff,
+            files: filesWithContent,
+            config_path: configPath,
+            is_copilot: isCopilot,
+          })}`
+        );
         throw new Error(`Backend ${res.status}: ${text}`);
       }
       const results = await res.json();
