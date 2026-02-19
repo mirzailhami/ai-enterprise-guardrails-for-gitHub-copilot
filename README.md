@@ -110,6 +110,20 @@ python run.py
 ```
 → Open http://localhost:8000/docs (Swagger UI)
 
+**Create .env in backend/**
+```
+HF_TOKEN=your_huggingface_token_here
+SCAN_API_KEY=your_scan_api_key
+HF_MODEL=meta-llama/Llama-3.2-3B-Instruct
+HF_ROUTER_URL=https://router.huggingface.co/v1/chat/completions
+```
+
+How to obtain / configure these values:
+- **HF_TOKEN**: Your Hugging Face API token (from https://huggingface.co/settings/tokens)
+- **SCAN_API_KEY**: A secret key that the backend requires on incoming `/scan` requests. Must match `BACKEND_API_KEY` set in the GitHub app (see below)
+- **HF_MODEL**: *(optional)* Hugging Face model to use for AI review. Can be omitted; defaults to `meta-llama/Llama-3.2-3B-Instruct`
+- **HF_ROUTER_URL**: *(optional)* Hugging Face router endpoint. Can be omitted; defaults to `https://router.huggingface.co/v1/chat/completions`
+
 ### Probot GitHub App Setup
 ```
 cd github-app
@@ -126,6 +140,7 @@ PRIVATE_KEY_PATH=./private-key.pem
 WEBHOOK_SECRET=your_webhook_secret
 GITHUB_TOKEN=your_pat_with_repo_scope
 BACKEND_URL=http://localhost:8000
+BACKEND_API_KEY=your_backend_api_key
 ```
 
 How to obtain these values:
@@ -134,6 +149,7 @@ How to obtain these values:
 - **WEBHOOK_SECRET**: Set when creating the GitHub App (or generate one and update in GitHub App settings)
 - **GITHUB_TOKEN**: Personal Access Token (classic) with repo scope (from GitHub → Settings → Developer settings → Personal access tokens)
 - **BACKEND_URL**: Use [http://localhost:8000](http://localhost:8000) locally or your ngrok URL for public webhook
+- **BACKEND_API_KEY**: Secret key sent by the GitHub app to authenticate with the backend `/scan` endpoint. Set this to the same value as `SCAN_API_KEY` in the backend `.env`
 
 ### Create & Configure GitHub App
 - Go to GitHub → Settings → Developer settings → GitHub Apps → New GitHub App

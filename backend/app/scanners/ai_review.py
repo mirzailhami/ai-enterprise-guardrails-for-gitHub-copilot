@@ -5,8 +5,8 @@ import re
 from typing import List, Dict
 from json_repair import repair_json
 
-HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions"
-HF_MODEL = "meta-llama/Llama-3.2-3B-Instruct"
+HF_ROUTER_URL = os.getenv("HF_ROUTER_URL", "https://router.huggingface.co/v1/chat/completions")
+HF_MODEL = os.getenv("HF_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
 
 def review(diff: str, config: Dict) -> List[Dict]:
     token = os.getenv("HF_TOKEN")
