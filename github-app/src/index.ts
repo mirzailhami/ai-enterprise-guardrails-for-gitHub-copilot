@@ -158,6 +158,8 @@ export = (app: Probot) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
+          "User-Agent": "guardrails-probot/1.0",
           "X-API-Key": process.env.BACKEND_API_KEY || "",
         },
         body: JSON.stringify({
@@ -172,15 +174,6 @@ export = (app: Probot) => {
       if (!res.ok) {
         const text = await res.text();
         app.log.warn(`Backend error body: ${text}`);
-        app.log.warn(
-          `Backend res body: ${JSON.stringify({
-            pr_id: `${owner}-${repo}-${prNumber}`,
-            diff: diff,
-            files: filesWithContent,
-            config_path: configPath,
-            is_copilot: isCopilot,
-          })}`
-        );
         throw new Error(`Backend ${res.status}: ${text}`);
       }
       const results = await res.json();
