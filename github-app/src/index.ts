@@ -168,6 +168,11 @@ export = (app: Probot) => {
         }),
       });
       app.log.info(`Backend response status: ${res.status}`);
+      if (!res.ok) {
+        const text = await res.text();
+        app.log.warn(`Backend error body: ${text}`);
+        throw new Error(`Backend ${res.status}: ${text}`);
+      }
       const results = await res.json();
 
       const violations = results.violations || [];
