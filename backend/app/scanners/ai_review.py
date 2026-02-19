@@ -121,3 +121,5 @@ def review(diff: str, config: Dict) -> List[Dict]:
         print(f"HF router request failed: {e}")
     except Exception as e:
         print(f"AI review failed: {e}")
+
+    return []
