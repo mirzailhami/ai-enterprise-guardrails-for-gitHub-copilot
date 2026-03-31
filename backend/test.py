@@ -18,12 +18,12 @@ def invalid_function(user_input):  # bad naming (but lowercase - adjust pattern 
     pickle.loads(user_input.encode())           # insecure_deserial AST
     print(query)                                # logging missing (no import logging)
     print("No logging here either")
-    
-def invalid_function(user_input):  # duplicate function definition
-    print("Duplicate function - should trigger duplicate_code if within-file check enabled")
 
 # Extra bad practice for AI review to catch
 def another_bad_func():
     user_data = input("Enter data: ")  # no input validation
     eval(user_data)                    # dangerous eval
     print("Missing hyphen -")          # formatting issue for AI
+
+def invalid_function(user_input):  # duplicate function definition
+    print("Duplicate function - should trigger duplicate_code if within-file check enabled")
